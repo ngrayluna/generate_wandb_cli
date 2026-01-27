@@ -15,3 +15,9 @@ for cmd in $PUBLIC_COMMANDS; do
     echo "Generating docs for: $cmd"
     mdclick dumps --baseModule wandb.cli.cli --baseCommand "$cmd" --docsPath docs
 done
+
+# Format the generated markdown files
+python format_markdown.py --markdown_directory docs
+
+# Mintlify the formatted markdown files
+python mintlify_md.py --markdown_directory docs

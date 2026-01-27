@@ -8,6 +8,13 @@ import argparse
 import glob
 import re
 
+def remove_h1_title(content):
+    """Remove the first H1 title from the markdown content.
+
+    Matches '# title' at the start of a line and removes it along with the newline.
+    """
+    return re.sub(r'^# .+\n+', '', content, count=1, flags=re.MULTILINE)
+
 
 def format_flags(usage_str):
     """Convert usage string to formatted flags (short flag first, then long flag).
@@ -189,6 +196,7 @@ def format_markdown_file(content):
     """
     content = convert_options_to_tables(content)
     content = convert_arguments_to_tables(content)
+    content = remove_h1_title(content)
     return content
 
 
