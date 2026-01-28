@@ -1,8 +1,10 @@
 # Generate W&B Models CLI
 
-Generate markdown reference documentation for wandb CLI commands.
+Generate markdown reference documentation for [W&B CLI commands](https://github.com/wandb/wandb/tree/main/wandb/cli).
 
 ## Usage
+
+Specify the `wandb` GitHub release tag that you want to generate docs for:
 
 ```bash
 ./generate_cli.sh <release_tag>
@@ -15,7 +17,7 @@ Example:
 
 ## What it does
 
-1. Clones/updates the `wandb/wandb` repo to `./wandb-repo/`
+1. Clones/updates the `wandb/wandb` repo to `./wandb/`
 2. Checks out the specified release tag
 3. Discovers all public (non-hidden) CLI commands
 4. Generates markdown docs using `md-click-2`

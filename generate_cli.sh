@@ -2,7 +2,7 @@
 # Generate markdown reference documentation for wandb CLI commands.
 #
 # This script:
-#   1. Clones/updates the wandb/wandb repo to ./wandb-repo/
+#   1. Clones/updates the wandb/wandb repo to ./wandb/
 #   2. Checks out the specified release tag
 #   3. Generates markdown docs using md-click from the checked-out source
 #   4. Formats the docs with tables and GitHub source links
@@ -23,7 +23,7 @@ fi
 
 RELEASE_TAG="$1"
 REPO_URL="https://github.com/wandb/wandb.git"
-REPO_DIR="wandb-repo"
+REPO_DIR="wandb"
 OUTPUT_JSON="source_info.json"
 OUTPUT_DIR="output"
 
