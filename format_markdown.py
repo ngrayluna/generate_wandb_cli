@@ -24,8 +24,54 @@ def load_source_info(filepath: str) -> dict:
         commands = json.load(f)
     return {cmd['func_name']: cmd for cmd in commands}
 
+def _github_button(href_links):
+    """To do: Add hugo scripting to add this function. For now, just add code line # for debugging.
+    
+    Args:
+        href_links (str): URL for the GitHub button.
+    """
+    return '<GitHubLink url="' + href_links + '" />' + "\n\n"
+
+def add_github_import_statement():
+    """Add GitHub import statement to the markdown file.
+    
+    Args:
+        filename (str): Name of the file.
+    """
+    return "import { GitHubLink } from '/snippets/en/_includes/github-source-link.mdx';" + "\n\n"
+
+
+def format_github_button(
+    source_file: str,
+    line_number: int,
+    release_tag: Optional[str] = None
+) -> str:
+    """Build a GitHub source link button for a file.
+
+    Args:
+        source_file: Local path to source file (from inspect.getfile)
+        line_number: Line number in source file
+        release_tag: Git tag for GitHub URL (e.g., 'v0.18.3'). Defaults to 'main'.
+
+    Returns:
+        GitHubLink component string
+
+    Example output URL:
+        https://github.com/wandb/wandb/blob/v0.18.3/wandb/cli/cli.py#L314
+    """
+    # Extract repo-relative path (e.g., "wandb/cli/cli.py")
+    _, sep, after = source_file.rpartition('/wandb/')
+    repo_path = 'wandb/' + after if sep else source_file
+
+    git_ref = release_tag if release_tag else "main"
+    github_url = f"https://github.com/wandb/wandb/blob/{git_ref}/{repo_path}#L{line_number}"
+
+    return _github_button(github_url)
+
+
+
 def add_source_link(content: str, source_file: str, line_number: int, release_tag: str = None) -> str:
-    """Add a source code link before the ## Usage section.
+    """Add a source code link at the top of the content (after frontmatter).
 
     Args:
         content: Markdown content
@@ -34,33 +80,15 @@ def add_source_link(content: str, source_file: str, line_number: int, release_ta
         release_tag: Git tag for GitHub URL (e.g., 'v0.18.3')
 
     Returns:
-        Content with source link inserted before ## Usage
-
-    Example output URL:
-        https://github.com/wandb/wandb/blob/v0.18.3/wandb/cli/cli.py#L314
+        Content with source link inserted at the top
     """
-    # Extract repo-relative path (e.g., "wandb/cli/cli.py")
-    # Works for both site-packages installs and cloned repo paths
-    if '/wandb/' in source_file:
-        # Find the last occurrence of '/wandb/' and include 'wandb/' in the path
-        idx = source_file.rfind('/wandb/')
-        short_path = source_file[idx + 1:]  # +1 to skip the leading '/'
-    else:
-        short_path = source_file
+    # Build the import statement and GitHub button
+    import_statement = add_github_import_statement()
+    github_button = format_github_button(source_file, line_number, release_tag)
+    source_link = f"{import_statement}{github_button}"
 
-    # Build GitHub URL
-    git_ref = release_tag if release_tag else "main"
-    github_url = f"https://github.com/wandb/wandb/blob/{git_ref}/{short_path}#L{line_number}"
-
-    source_link = f"\n[View source on GitHub]({github_url})\n\n"
-
-    # Insert before ## Usage section
-    usage_match = re.search(r'^## Usage', content, re.MULTILINE)
-    if usage_match:
-        return content[:usage_match.start()] + source_link + content[usage_match.start():]
-    else:
-        # If no Usage section, append at the end
-        return content + source_link
+    # Insert at the beginning (frontmatter is added separately in main())
+    return source_link + content
 
 
 def add_frontmatter(filename: str) -> str:
