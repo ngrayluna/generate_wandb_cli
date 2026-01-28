@@ -25,9 +25,10 @@ Output is written to `./output/`.
 
 ## Prerequisites
 
-- Python environment with:
-  - `click`
-  - `md-click-2`
+- Install Python package requirements:
+  ```bash
+  pip install -r requirements.txt
+  ```
 - Git
 
 ## Files
