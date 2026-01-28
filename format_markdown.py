@@ -9,6 +9,7 @@ import os
 import re
 from typing import Optional
 
+
 def remove_h1_title(content: str) -> str:
     """Remove the first H1 title from the markdown content.
 

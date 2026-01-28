@@ -4,20 +4,6 @@ Reads in markdown files and adds metadata and other post-processing for Mintlify
 import argparse
 import glob
 import os
-import re
-
-def add_frontmatter(filename: str) -> str:
-    """Add Mintlify frontmatter to a markdown file.
-
-    Args:
-        filename: Name of the markdown file
-        content: Full markdown file content
-
-    Returns:
-        Content with frontmatter added
-    """
-    title = os.path.splitext(os.path.basename(filename))[0].replace('_', ' ')
-    return f"---\ntitle: wandb {title}\n---\n\n"
 
 def rename_markdown_files(directory: str, convert_to_mdx: bool = False) -> None:
     """Rename markdown files in the specified directory.
