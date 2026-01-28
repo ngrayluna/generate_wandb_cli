@@ -2,6 +2,9 @@
 
 Generate markdown reference documentation for [W&B CLI commands](https://github.com/wandb/wandb/tree/main/wandb/cli).
 
+<img width="959" height="426" alt="Screenshot 2026-01-28 at 3 44 08 PM" src="https://github.com/user-attachments/assets/3567217b-782d-464a-9ad2-f24ff2995a59" />
+
+
 ## Usage
 
 Specify the `wandb` GitHub release tag that you want to generate docs for:
