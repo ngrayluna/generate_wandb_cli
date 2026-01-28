@@ -115,7 +115,7 @@ def parse_option_block(block):
         'type': opt_type,
         'default': default,
         'flags': flags,
-        'description': description
+        'description': description or 'No description available.'
     }
 
 
