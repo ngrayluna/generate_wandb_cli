@@ -221,6 +221,20 @@ def convert_arguments_to_tables(content):
     return new_content
 
 
+def remove_empty_arguments_section(content):
+    """Remove the ## Arguments section if it's empty.
+
+    Args:
+        content: Full markdown file content
+
+    Returns:
+        Modified content with empty Arguments section removed
+    """
+    # Match ## Arguments followed by only whitespace until next ## or end of file
+    pattern = r'## Arguments\n\s*(?=\n## |\Z)'
+    return re.sub(pattern, '', content)
+
+
 def format_markdown_file(content):
     """Apply all formatting transformations to markdown content.
 
@@ -233,6 +247,7 @@ def format_markdown_file(content):
     content = format_usage_code_block(content)
     content = convert_options_to_tables(content)
     content = convert_arguments_to_tables(content)
+    content = remove_empty_arguments_section(content)
     content = remove_h1_title(content)
     return content
 
