@@ -27,9 +27,6 @@ REPO_DIR="wandb-repo"
 OUTPUT_JSON="source_info.json"
 OUTPUT_DIR="output"
 
-# Activate the correct Python environment
-source $(pyenv root)/versions/cli_docs/bin/activate
-
 # Clone or update the wandb repository
 if [ -d "$REPO_DIR" ]; then
     echo "Updating existing wandb repository..."
