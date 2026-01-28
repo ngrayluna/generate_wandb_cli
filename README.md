@@ -1,4 +1,4 @@
-# CLI LazyDocs
+# Generate W&B Models CLI
 
 Generate markdown reference documentation for wandb CLI commands.
 
