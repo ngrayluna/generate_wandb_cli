@@ -9,6 +9,18 @@ import os
 import re
 from typing import Optional
 
+def add_frontmatter(filename: str) -> str:
+    """Add Mintlify frontmatter to a markdown file.
+
+    Args:
+        filename: Name of the markdown file
+        content: Full markdown file content
+
+    Returns:
+        Content with frontmatter added
+    """
+    title = os.path.splitext(os.path.basename(filename))[0].replace('_', ' ')
+    return f"---\ntitle: wandb {title}\n---\n\n"
 
 def remove_h1_title(content: str) -> str:
     """Remove the first H1 title from the markdown content.
@@ -261,7 +273,9 @@ def main(args: argparse.Namespace) -> None:
 
         try:
             with open(filename, 'w', encoding='utf-8') as f:
+                f.write(add_frontmatter(filename))
                 f.write(formatted)
+
         # If error writing file, skip
         except IOError as e:
             print(f"Error writing {filename}: {e}")
