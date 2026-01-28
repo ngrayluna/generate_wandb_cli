@@ -66,9 +66,8 @@ def main(args):
         print("Mintlify-ing docs...", filename)
         with open(filename, 'r') as f:
             content = f.read()
-        frontmatter = add_frontmatter(filename)
         with open(filename, 'w') as f:
-            f.write(frontmatter + content)
+            f.write(content)
 
     # Group commands into subdirectories if needed
     #group_markdown_files(args.markdown_directory)
