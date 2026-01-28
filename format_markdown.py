@@ -24,27 +24,34 @@ def load_source_info(filepath: str) -> dict:
         commands = json.load(f)
     return {cmd['func_name']: cmd for cmd in commands}
 
-def add_source_link(content: str, source_file: str, line_number: int) -> str:
+def add_source_link(content: str, source_file: str, line_number: int, release_tag: str = None) -> str:
     """Add a source code link before the ## Usage section.
 
     Args:
         content: Markdown content
-        source_file: Path to source file
+        source_file: Path to source file (local path from inspect.getfile)
         line_number: Line number in source file
+        release_tag: Git tag for GitHub URL (e.g., 'v0.18.3')
 
     Returns:
         Content with source link inserted before ## Usage
+
+    Example output URL:
+        https://github.com/wandb/wandb/blob/v0.18.3/wandb/cli/cli.py#L314
     """
-    # Extract just the filename from the full path (e.g., "wandb/cli/cli.py")
-    if 'site-packages/' in source_file:
-        short_path = source_file.split('site-packages/')[-1]
+    # Extract repo-relative path (e.g., "wandb/cli/cli.py")
+    # Works for both site-packages installs and cloned repo paths
+    if '/wandb/' in source_file:
+        # Find the last occurrence of '/wandb/' and include 'wandb/' in the path
+        idx = source_file.rfind('/wandb/')
+        short_path = source_file[idx + 1:]  # +1 to skip the leading '/'
     else:
         short_path = source_file
 
-    # Create the source link (using GitHub URL format)
-    # This assumes wandb/wandb repo structure
-    github_base = "https://github.com/wandb/wandb/blob/main"
-    github_url = f"{github_base}/{short_path}#L{line_number}"
+    # Build GitHub URL
+    git_ref = release_tag if release_tag else "main"
+    github_url = f"https://github.com/wandb/wandb/blob/{git_ref}/{short_path}#L{line_number}"
+
     source_link = f"\n[View source on GitHub]({github_url})\n\n"
 
     # Insert before ## Usage section
@@ -275,7 +282,8 @@ def remove_empty_arguments_section(content: str) -> str:
 def format_markdown_file(
     content: str,
     source_file: Optional[str] = None,
-    line_number: Optional[int] = None
+    line_number: Optional[int] = None,
+    release_tag: Optional[str] = None
 ) -> str:
     """Apply all formatting transformations to markdown content.
 
@@ -283,6 +291,7 @@ def format_markdown_file(
         content: Full markdown file content
         source_file: Optional path to source file for GitHub link
         line_number: Optional line number in source file
+        release_tag: Optional git tag for GitHub URL (e.g., 'v0.18.3')
 
     Returns:
         Modified content with all transformations applied
@@ -295,7 +304,7 @@ def format_markdown_file(
 
     # Add source link if source info is provided
     if source_file and line_number:
-        content = add_source_link(content, source_file, line_number)
+        content = add_source_link(content, source_file, line_number, release_tag)
 
     return content
 
@@ -344,7 +353,7 @@ def main(args):
             line_number = cmd_info.get('line_number')
 
         # Apply all formatting transformations (including source link if available)
-        formatted = format_markdown_file(content, source_file, line_number)
+        formatted = format_markdown_file(content, source_file, line_number, args.release_tag)
 
         # Write back to file with frontmatter
         print(f"Writing formatted content to {filename}")
@@ -364,5 +373,10 @@ if __name__ == "__main__":
         "--source-info",
         metavar="FILE",
         help="JSON file with command source info (from get_public_commands.py --output-json)"
+    )
+    parser.add_argument(
+        "--release-tag",
+        metavar="TAG",
+        help="Git release tag for GitHub source links (e.g., 'v0.18.3'). Defaults to 'main'."
     )
     main(parser.parse_args())
