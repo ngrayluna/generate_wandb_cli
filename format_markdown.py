@@ -16,6 +16,42 @@ def remove_h1_title(content):
     return re.sub(r'^# .+\n+', '', content, count=1, flags=re.MULTILINE)
 
 
+def format_usage_code_block(content):
+    """Format the code block after ## Usage section.
+
+    Changes:
+        - Code block language from ``` to ```shell
+        - "Usage: <command>" to "wandb <command>"
+
+    Before:
+        ## Usage
+
+        ```
+        Usage: docker [OPTIONS] [DOCKER_RUN_ARGS]... [DOCKER_IMAGE]
+        ```
+
+    After:
+        ## Usage
+
+        ```shell
+        wandb docker [OPTIONS] [DOCKER_RUN_ARGS]... [DOCKER_IMAGE]
+        ```
+    """
+    # Pattern to match: ## Usage followed by a code block containing "Usage: ..."
+    # Captures: (## Usage\n\n)(```)(code content)(```)
+    pattern = r'(## Usage\n\n)(```)\n(Usage: )(.+?)\n(```)'
+
+    def replace_usage(match):
+        header = match.group(1)       # "## Usage\n\n"
+        code_start = '```shell'       # Change to ```shell
+        command = match.group(4)      # The command after "Usage: "
+        code_end = match.group(5)     # "```"
+
+        return f'{header}{code_start}\nwandb {command}\n{code_end}'
+
+    return re.sub(pattern, replace_usage, content, flags=re.DOTALL)
+
+
 def format_flags(usage_str):
     """Convert usage string to formatted flags (short flag first, then long flag).
 
@@ -186,14 +222,15 @@ def convert_arguments_to_tables(content):
 
 
 def format_markdown_file(content):
-    """Convert both Options and Arguments sections to tables.
+    """Apply all formatting transformations to markdown content.
 
     Args:
         content: Full markdown file content
 
     Returns:
-        Modified content with both sections converted to tables
+        Modified content with all transformations applied
     """
+    content = format_usage_code_block(content)
     content = convert_options_to_tables(content)
     content = convert_arguments_to_tables(content)
     content = remove_h1_title(content)
