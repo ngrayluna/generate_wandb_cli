@@ -22,4 +22,4 @@ done
 python format_markdown.py --markdown_directory "$OUTPUT_DIR"
 
 # Mintlify the formatted markdown files
-python mintlify_md.py --markdown_directory "$OUTPUT_DIR"
+#python rename_files.py --markdown_directory "$OUTPUT_DIR"
