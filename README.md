@@ -27,11 +27,10 @@ Output is written to `./output/`.
 
 ## Prerequisites
 
-- Install Python package requirements:
+Install Python package requirements:
   ```bash
   pip install -r requirements.txt
   ```
-- Git
 
 ## Files
 
