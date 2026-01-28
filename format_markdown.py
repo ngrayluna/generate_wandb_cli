@@ -3,12 +3,13 @@ Custom formatting for markdown files and Mintlify integration.
 
 Converts md-click bullet point options/arguments to markdown tables.
 """
-import os
 import argparse
 import glob
+import os
 import re
+from typing import Optional
 
-def remove_h1_title(content):
+def remove_h1_title(content: str) -> str:
     """Remove the first H1 title from the markdown content.
 
     Matches '# title' at the start of a line and removes it along with the newline.
@@ -16,7 +17,7 @@ def remove_h1_title(content):
     return re.sub(r'^# .+\n+', '', content, count=1, flags=re.MULTILINE)
 
 
-def format_usage_code_block(content):
+def format_usage_code_block(content: str) -> str:
     """Format the code block after ## Usage section.
 
     Changes:
@@ -52,7 +53,7 @@ def format_usage_code_block(content):
     return re.sub(pattern, replace_usage, content, flags=re.DOTALL)
 
 
-def format_flags(usage_str):
+def format_flags(usage_str: str) -> str:
     """Convert usage string to formatted flags (short flag first, then long flag).
 
     Example: '--project\n-p' -> '-p, --project'
@@ -68,7 +69,7 @@ def format_flags(usage_str):
     return ', '.join(all_flags)
 
 
-def parse_option_block(block):
+def parse_option_block(block: str) -> Optional[dict]:
     """Parse a single option block and return its components.
 
     Input format:
@@ -79,7 +80,9 @@ def parse_option_block(block):
         -o`
             Description text here.
 
-    Returns dict with: name, type, default, flags, description
+    Returns:
+        Dict with keys: name, type, default, flags, description.
+        Returns None if the block cannot be parsed.
     """
     # Extract option name
     name_match = re.search(r'^\* `([^`]+)`:', block, re.MULTILINE)
@@ -119,7 +122,7 @@ def parse_option_block(block):
     }
 
 
-def convert_section_to_tables(section_content, section_type='options'):
+def convert_section_to_tables(section_content: str, section_type: str = 'options') -> str:
     """Convert a section's bullet points to markdown tables.
 
     Args:
@@ -159,69 +162,43 @@ def convert_section_to_tables(section_content, section_type='options'):
     return '\n'.join(tables)
 
 
-def convert_options_to_tables(content):
-    """Convert the ## Options section from bullet points to markdown tables.
+def _convert_section(content: str, section_name: str, section_type: str) -> str:
+    """Convert a markdown section's bullet points to tables.
 
     Args:
         content: Full markdown file content
+        section_name: Section header name (e.g., 'Options', 'Arguments')
+        section_type: Type for table formatting ('options' or 'arguments')
 
     Returns:
-        Modified content with Options section converted to tables
+        Modified content with section converted to tables
     """
-    # Find the ## Options section (ends at next ## or end of file)
-    options_pattern = r'(## Options\n)(.*?)(?=\n## |\Z)'
-    options_match = re.search(options_pattern, content, re.DOTALL)
+    pattern = rf'(## {section_name}\n)(.*?)(?=\n## |\Z)'
+    match = re.search(pattern, content, re.DOTALL)
 
-    if not options_match:
+    if not match:
         return content
 
-    options_header = options_match.group(1)
-    options_content = options_match.group(2)
+    header = match.group(1)
+    section_content = match.group(2)
 
-    # Convert to tables
-    new_options_content = convert_section_to_tables(options_content, 'options')
+    new_section_content = convert_section_to_tables(section_content, section_type)
 
-    # Replace the options section
-    new_options = options_header + '\n' + new_options_content
-    new_content = content[:options_match.start()] + new_options + content[options_match.end():]
-
-    return new_content
+    new_section = header + '\n' + new_section_content
+    return content[:match.start()] + new_section + content[match.end():]
 
 
-def convert_arguments_to_tables(content):
-    """Convert the ## Arguments section from bullet points to markdown tables.
-
-    Args:
-        content: Full markdown file content
-
-    Returns:
-        Modified content with Arguments section converted to tables
-    """
-    # Find the ## Arguments section (ends at next ## or end of file)
-    args_pattern = r'(## Arguments\n)(.*?)(?=\n## |\Z)'
-    args_match = re.search(args_pattern, content, re.DOTALL)
-
-    if not args_match:
-        return content
-
-    args_header = args_match.group(1)
-    args_content = args_match.group(2)
-
-    # Skip if empty
-    if not args_content.strip():
-        return content
-
-    # Convert to tables
-    new_args_content = convert_section_to_tables(args_content, 'arguments')
-
-    # Replace the arguments section
-    new_args = args_header + '\n' + new_args_content
-    new_content = content[:args_match.start()] + new_args + content[args_match.end():]
-
-    return new_content
+def convert_options_to_tables(content: str) -> str:
+    """Convert the ## Options section from bullet points to markdown tables."""
+    return _convert_section(content, 'Options', 'options')
 
 
-def remove_empty_arguments_section(content):
+def convert_arguments_to_tables(content: str) -> str:
+    """Convert the ## Arguments section from bullet points to markdown tables."""
+    return _convert_section(content, 'Arguments', 'arguments')
+
+
+def remove_empty_arguments_section(content: str) -> str:
     """Remove the ## Arguments section if it's empty.
 
     Args:
@@ -235,7 +212,7 @@ def remove_empty_arguments_section(content):
     return re.sub(pattern, '', content)
 
 
-def format_markdown_file(content):
+def format_markdown_file(content: str) -> str:
     """Apply all formatting transformations to markdown content.
 
     Args:
@@ -252,21 +229,49 @@ def format_markdown_file(content):
     return content
 
 
-def main(args):
-    for filename in glob.glob(os.path.join(os.getcwd(), args.markdown_directory, "*.md")):
-        print("Processing...", filename)
+def main(args: argparse.Namespace) -> None:
+    """Process all markdown files in the specified directory.
 
-        with open(filename, 'r') as f:
-            content = f.read()
+    Args:
+        args: Parsed command-line arguments with markdown_directory attribute.
+    """
+    pattern = os.path.join(os.getcwd(), args.markdown_directory, "*.md")
+    files = glob.glob(pattern)
 
+    # Check if any files found
+    if not files:
+        print(f"No markdown files found in {args.markdown_directory}")
+        return
+
+    # Process each file
+    for filename in files:
+        print(f"Processing... {filename}")
+
+        try:
+            with open(filename, 'r', encoding='utf-8') as f:
+                content = f.read()
+        # If error reading file, skip
+        except IOError as e:
+            print(f"Error reading {filename}: {e}")
+            continue
+
+        # Apply formatting
         formatted = format_markdown_file(content)
 
-        with open(filename, 'w') as f:
-            f.write(formatted)
+        try:
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(formatted)
+        # If error writing file, skip
+        except IOError as e:
+            print(f"Error writing {filename}: {e}")
+            continue
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Post-process md-click-2 markdown.")
-    parser.add_argument("--markdown_directory", default="docs",
-                        help="Directory containing markdown files to process")
+    parser.add_argument(
+        "--markdown_directory",
+        default="docs",
+        help="Directory containing markdown files to process"
+    )
     main(parser.parse_args())
