@@ -5,9 +5,56 @@ Converts md-click bullet point options/arguments to markdown tables.
 """
 import argparse
 import glob
+import json
 import os
 import re
 from typing import Optional
+
+
+def load_source_info(filepath: str) -> dict:
+    """Load source info from JSON file and return as a mapping.
+
+    Args:
+        filepath: Path to JSON file with command source info
+
+    Returns:
+        Dict mapping func_name -> {name, func_name, source_file, line_number}
+    """
+    with open(filepath, 'r', encoding='utf-8') as f:
+        commands = json.load(f)
+    return {cmd['func_name']: cmd for cmd in commands}
+
+def add_source_link(content: str, source_file: str, line_number: int) -> str:
+    """Add a source code link before the ## Usage section.
+
+    Args:
+        content: Markdown content
+        source_file: Path to source file
+        line_number: Line number in source file
+
+    Returns:
+        Content with source link inserted before ## Usage
+    """
+    # Extract just the filename from the full path (e.g., "wandb/cli/cli.py")
+    if 'site-packages/' in source_file:
+        short_path = source_file.split('site-packages/')[-1]
+    else:
+        short_path = source_file
+
+    # Create the source link (using GitHub URL format)
+    # This assumes wandb/wandb repo structure
+    github_base = "https://github.com/wandb/wandb/blob/main"
+    github_url = f"{github_base}/{short_path}#L{line_number}"
+    source_link = f"\n[View source on GitHub]({github_url})\n\n"
+
+    # Insert before ## Usage section
+    usage_match = re.search(r'^## Usage', content, re.MULTILINE)
+    if usage_match:
+        return content[:usage_match.start()] + source_link + content[usage_match.start():]
+    else:
+        # If no Usage section, append at the end
+        return content + source_link
+
 
 def add_frontmatter(filename: str) -> str:
     """Add Mintlify frontmatter to a markdown file.
@@ -225,11 +272,17 @@ def remove_empty_arguments_section(content: str) -> str:
     return re.sub(pattern, '', content)
 
 
-def format_markdown_file(content: str) -> str:
+def format_markdown_file(
+    content: str,
+    source_file: Optional[str] = None,
+    line_number: Optional[int] = None
+) -> str:
     """Apply all formatting transformations to markdown content.
 
     Args:
         content: Full markdown file content
+        source_file: Optional path to source file for GitHub link
+        line_number: Optional line number in source file
 
     Returns:
         Modified content with all transformations applied
@@ -239,15 +292,16 @@ def format_markdown_file(content: str) -> str:
     content = convert_arguments_to_tables(content)
     content = remove_empty_arguments_section(content)
     content = remove_h1_title(content)
+
+    # Add source link if source info is provided
+    if source_file and line_number:
+        content = add_source_link(content, source_file, line_number)
+
     return content
 
 
-def main(args: argparse.Namespace) -> None:
-    """Process all markdown files in the specified directory.
-
-    Args:
-        args: Parsed command-line arguments with markdown_directory attribute.
-    """
+def main(args):
+    # Find all markdown files in the specified directory
     pattern = os.path.join(os.getcwd(), args.markdown_directory, "*.md")
     files = glob.glob(pattern)
 
@@ -256,30 +310,47 @@ def main(args: argparse.Namespace) -> None:
         print(f"No markdown files found in {args.markdown_directory}")
         return
 
-    # Process each file
+    # Load source JSON info if provided
+    source_info = {}
+    if args.source_info:
+        try:
+            source_info = load_source_info(args.source_info)
+            print(f"Loaded source info for {len(source_info)} commands")
+        except (IOError, json.JSONDecodeError) as e:
+            print(f"Warning: Could not load source info: {e}")
+
+    # Process each markdown file
     for filename in files:
         print(f"Processing... {filename}")
-
         try:
             with open(filename, 'r', encoding='utf-8') as f:
                 content = f.read()
-        # If error reading file, skip
         except IOError as e:
             print(f"Error reading {filename}: {e}")
             continue
 
-        # Apply formatting
-        formatted = format_markdown_file(content)
+        # Get source info for this command if available
+        basename = os.path.splitext(os.path.basename(filename))[0]
+        func_name = basename.replace('-', '_')  # Handle "docker-run" -> "docker_run"
 
-        try:
-            with open(filename, 'w', encoding='utf-8') as f:
-                f.write(add_frontmatter(filename))
-                f.write(formatted)
+        # Default to None if not found
+        source_file = None
+        line_number = None
 
-        # If error writing file, skip
-        except IOError as e:
-            print(f"Error writing {filename}: {e}")
-            continue
+        # Look up source info
+        if func_name in source_info:
+            cmd_info = source_info[func_name]
+            source_file = cmd_info.get('source_file')
+            line_number = cmd_info.get('line_number')
+
+        # Apply all formatting transformations (including source link if available)
+        formatted = format_markdown_file(content, source_file, line_number)
+
+        # Write back to file with frontmatter
+        print(f"Writing formatted content to {filename}")
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(add_frontmatter(filename))
+            f.write(formatted)
 
 
 if __name__ == "__main__":
@@ -288,5 +359,10 @@ if __name__ == "__main__":
         "--markdown_directory",
         default="docs",
         help="Directory containing markdown files to process"
+    )
+    parser.add_argument(
+        "--source-info",
+        metavar="FILE",
+        help="JSON file with command source info (from get_public_commands.py --output-json)"
     )
     main(parser.parse_args())
