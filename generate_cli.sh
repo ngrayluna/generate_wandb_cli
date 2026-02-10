@@ -9,37 +9,42 @@
 #
 # Output is written to ./output/ directory.
 #
-# Usage: ./generate_cli.sh <release_tag>
+# Usage: ./generate_cli.sh [release_tag]
 # Example: ./generate_cli.sh v0.18.3
+#
+# If no release_tag is provided, the script uses the existing ./wandb/
+# directory as-is (useful for local testing). GitHub source links will
+# point to the 'main' branch.
 
 set -e  # Exit on error
 
-# Check for required argument
-if [ -z "$1" ]; then
-    echo "Usage: $0 <release_tag>"
-    echo "Example: $0 v0.18.3"
-    exit 1
-fi
-
-RELEASE_TAG="$1"
+RELEASE_TAG="${1:-}"
 REPO_URL="https://github.com/wandb/wandb.git"
 REPO_DIR="wandb"
 OUTPUT_JSON="source_info.json"
 OUTPUT_DIR="output"
 
-# Clone or update the wandb repository
-if [ -d "$REPO_DIR" ]; then
-    echo "Updating existing wandb repository..."
-    git -C "$REPO_DIR" fetch --tags
-else
-    echo "Cloning wandb repository..."
-    git clone --depth 1 --no-checkout "$REPO_URL" "$REPO_DIR"
-    git -C "$REPO_DIR" fetch --tags --depth 1
-fi
+if [ -n "$RELEASE_TAG" ]; then
+    # Clone or update the wandb repository
+    if [ -d "$REPO_DIR" ]; then
+        echo "Updating existing wandb repository..."
+        git -C "$REPO_DIR" fetch --tags
+    else
+        echo "Cloning wandb repository..."
+        git clone --depth 1 --no-checkout "$REPO_URL" "$REPO_DIR"
+        git -C "$REPO_DIR" fetch --tags --depth 1
+    fi
 
-# Checkout the specified release tag
-echo "Checking out $RELEASE_TAG..."
-git -C "$REPO_DIR" checkout "$RELEASE_TAG" --force
+    # Checkout the specified release tag
+    echo "Checking out $RELEASE_TAG..."
+    git -C "$REPO_DIR" checkout "$RELEASE_TAG" --force
+else
+    echo "No release tag specified. Using existing $REPO_DIR/ directory for local testing..."
+    if [ ! -d "$REPO_DIR" ]; then
+        echo "Error: $REPO_DIR/ directory not found. Either provide a release tag or ensure the wandb repo exists locally."
+        exit 1
+    fi
+fi
 
 # Set PYTHONPATH to use the checked-out repo
 export PYTHONPATH="$PWD/$REPO_DIR:$PYTHONPATH"
@@ -60,6 +65,10 @@ for cmd in $PUBLIC_COMMANDS; do
 done
 
 # Format the generated markdown files with source links
-python format_markdown.py --markdown_directory "$OUTPUT_DIR" --source-info "$OUTPUT_JSON" --release-tag "$RELEASE_TAG"
+if [ -n "$RELEASE_TAG" ]; then
+    python format_markdown.py --markdown_directory "$OUTPUT_DIR" --source-info "$OUTPUT_JSON" --release-tag "$RELEASE_TAG"
+else
+    python format_markdown.py --markdown_directory "$OUTPUT_DIR" --source-info "$OUTPUT_JSON"
+fi
 
-echo "Documentation generated for wandb $RELEASE_TAG in $OUTPUT_DIR/"
+echo "Documentation generated${RELEASE_TAG:+ for wandb $RELEASE_TAG} in $OUTPUT_DIR/"
