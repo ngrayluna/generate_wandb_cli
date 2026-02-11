@@ -9,7 +9,6 @@ import json
 import os
 import re
 from typing import Optional
-import click
 
 def load_source_info(filepath: str) -> dict:
     """Load source info from JSON file and return as a mapping.
