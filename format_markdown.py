@@ -9,7 +9,7 @@ import json
 import os
 import re
 from typing import Optional
-
+import click
 
 def load_source_info(filepath: str) -> dict:
     """Load source info from JSON file and return as a mapping.
@@ -246,8 +246,21 @@ def convert_section_to_tables(section_content: str, section_type: str = 'options
 |------|---------|------|
 | `{opt['flags']}` | {opt['default']} | {opt['type']} |
 """
-            else:
+            elif section_type == 'arguments':
+                # Check if Argument "Type" is click.Path(exists=True)
+                # This returns bytes object "<click.types.Path object at ...>"
+                # We don't want to show the full object, just "File Path"
+                if "click.types.Path" in str(opt['type']):
+                    opt['type'] = 'File Path'
                 # Arguments don't have flags, just the name
+                table = f"""### `{opt['name']}`
+
+| Name | Default | Type |
+|------|---------|------|
+| `{opt['name']}` | {opt['default']} | {opt['type']} |
+"""                
+            else:
+                # Fallback to a generic table if section_type is unrecognized
                 table = f"""### `{opt['name']}`
 
 | Name | Default | Type | Description |
