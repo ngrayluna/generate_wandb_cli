@@ -240,9 +240,11 @@ def convert_section_to_tables(section_content: str, section_type: str = 'options
                 # Options have flags
                 table = f"""### `{opt['name']}`
 
-| Flag | Default | Type | Description |
-|------|---------|------|-------------|
-| `{opt['flags']}` | {opt['default']} | {opt['type']} | {opt['description']} |
+{opt['description']}                
+
+| Flag | Default | Type | 
+|------|---------|------|
+| `{opt['flags']}` | {opt['default']} | {opt['type']} |
 """
             else:
                 # Arguments don't have flags, just the name
