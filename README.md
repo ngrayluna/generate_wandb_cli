@@ -2,7 +2,8 @@
 
 Generate markdown reference documentation for [W&B CLI commands](https://github.com/wandb/wandb/tree/main/wandb/cli).
 
-<img width="959" height="426" alt="Screenshot 2026-01-28 at 3 44 08 PM" src="https://github.com/user-attachments/assets/3567217b-782d-464a-9ad2-f24ff2995a59" />
+<img width="1200" height="708" alt="Screenshot 2026-02-11 at 4 13 23 PM" src="https://github.com/user-attachments/assets/7b094fdf-ac26-4feb-95cb-e907cf7ba73a" />
+
 
 
 ## Usage
