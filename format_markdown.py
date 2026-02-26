@@ -24,7 +24,7 @@ def load_source_info(filepath: str) -> dict:
     return {cmd['func_name']: cmd for cmd in commands}
 
 def _github_button(href_links):
-    """To do: Add hugo scripting to add this function. For now, just add code line # for debugging.
+    """Add a GitHub button with the given URL.
     
     Args:
         href_links (str): URL for the GitHub button.
@@ -372,7 +372,6 @@ def main(args):
 
     # Process each markdown file
     for filename in files:
-        print(f"Processing... {filename}")
         try:
             with open(filename, 'r', encoding='utf-8') as f:
                 content = f.read()

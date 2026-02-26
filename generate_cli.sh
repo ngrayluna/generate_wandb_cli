@@ -23,6 +23,7 @@ REPO_URL="https://github.com/wandb/wandb.git"
 REPO_DIR="wandb"
 OUTPUT_JSON="source_info.json"
 OUTPUT_DIR="output"
+MDX_OUTPUT_DIR="cli"
 
 if [ -n "$RELEASE_TAG" ]; then
     # Clone or update the wandb repository
@@ -70,5 +71,7 @@ if [ -n "$RELEASE_TAG" ]; then
 else
     python format_markdown.py --markdown_directory "$OUTPUT_DIR" --source-info "$OUTPUT_JSON"
 fi
+
+python rename_files.py --markdown_directory "$OUTPUT_DIR" --convert_to_mdx --output_directory "$MDX_OUTPUT_DIR"
 
 echo "Documentation generated${RELEASE_TAG:+ for wandb $RELEASE_TAG} in $OUTPUT_DIR/"
