@@ -6,14 +6,15 @@ import glob
 import os
 from pathlib import Path
 
-def rename_markdown_file(filename: str, output_directory: str, convert_to_mdx: bool = False) -> None:
+def rename_markdown_file(filename: str, convert_to_mdx: bool = False) -> None:
     """Append "wandb-" prefix to the filename.
 
     Optionally change the extension to .mdx.
 
+    Store the renamed file in the same directory.
+
     Args:
         filename: Path to the markdown file
-        output_directory: Directory to move the renamed file to
         convert_to_mdx: If True, convert .md files to .mdx
     """
     
@@ -22,7 +23,7 @@ def rename_markdown_file(filename: str, output_directory: str, convert_to_mdx: b
         new_filename = "wandb-" + os.path.basename(base) + ".mdx"
     else:
         new_filename = "wandb-" + os.path.basename(base) + ".md"
-    os.rename(filename, os.path.join(output_directory, new_filename))
+    os.rename(filename, os.path.join(os.path.dirname(filename), new_filename))
 
 def check_directory_exists(directory: str) -> bool:
     """Check if the specified directory exists.
@@ -44,20 +45,16 @@ def create_directory_if_not_exists(directory: str) -> None:
         os.makedirs(directory)
 
 def main(args):
-    print(f"Renaming files in directory: {args.markdown_directory}\noutput_directory: {args.output_directory}")
+    print(f"Renaming files in directory: {args.markdown_directory}")
 
     # Check if the markdown directory exists before proceeding
     if not check_directory_exists(args.markdown_directory):
-        print(f"Error: Directory '{args.markdown_directory}' does not exist.")
+        print(f"Error: Directory with markdown content '{args.markdown_directory}' does not exist.")
         return
     
-    if not check_directory_exists(args.output_directory):
-        print(f"Output directory '{args.output_directory}' does not exist. Creating it.")
-        create_directory_if_not_exists(args.output_directory)
-
     directory = Path(args.markdown_directory)
     for md_file in directory.rglob('*.md'):
-        rename_markdown_file(md_file, args.output_directory, convert_to_mdx=args.convert_to_mdx)
+        rename_markdown_file(md_file, convert_to_mdx=args.convert_to_mdx)
         # Here you can add any additional processing you want to do with each markdown file
 
 
@@ -67,6 +64,4 @@ if __name__ == "__main__":
                         help="Directory containing markdown files to process")
     parser.add_argument("--convert_to_mdx", action='store_true',
                         help="Convert .md files to .mdx for Mintlify")
-    parser.add_argument("--output_directory", default="cli",
-                        help="Directory to output processed markdown files")
     main(parser.parse_args())

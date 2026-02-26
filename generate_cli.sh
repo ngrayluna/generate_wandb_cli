@@ -72,6 +72,8 @@ else
     python format_markdown.py --markdown_directory "$OUTPUT_DIR" --source-info "$OUTPUT_JSON"
 fi
 
-python rename_files.py --markdown_directory "$OUTPUT_DIR" --convert_to_mdx --output_directory "$MDX_OUTPUT_DIR"
+python sort_markdown.py --output-markdown "$OUTPUT_DIR" --source-info "$OUTPUT_JSON"
+
+python rename_files.py --markdown_directory "$OUTPUT_DIR" --convert_to_mdx
 
 echo "Documentation generated${RELEASE_TAG:+ for wandb $RELEASE_TAG} in $OUTPUT_DIR/"
