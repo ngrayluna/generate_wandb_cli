@@ -230,7 +230,7 @@ _TYPE_DISPLAY_NAMES = {
 }
 
 
-def normalize_option_type(raw_type: str, classification: str) -> str:
+def normalize_click_type(raw_type: str, classification: str) -> str:
     """Map Click type class names to clean display names.
 
     Returns one of: STR, INT, FLOAT, BOOL, BOOL Flag, or the raw type name
@@ -255,7 +255,7 @@ def build_options_table_from_json(json_options: list) -> str:
         name = option["name"]
         description = option.get("help") or "No description available."
         default = option.get("default", "")
-        opt_type = normalize_option_type(
+        opt_type = normalize_click_type(
             option.get("type", ""),
             option.get("classification", ""),
         )
@@ -276,6 +276,32 @@ def build_options_table_from_json(json_options: list) -> str:
 | Flag | Default | Type |
 |------|---------|------|
 | `{flags}` | {default} | {opt_type} |
+"""
+        tables.append(table)
+
+    return "\n".join(tables)
+
+
+def build_arguments_table_from_json(json_arguments: list) -> str:
+    """Build markdown argument tables from structured JSON argument metadata.
+
+    Args:
+        json_arguments: List of argument dicts from inspect_click_commands.py
+
+    Returns:
+        Formatted markdown string with tables for each argument
+    """
+    tables = []
+    for argument in json_arguments:
+        name = argument["name"]
+        default = argument.get("default", "")
+        arg_type = normalize_click_type(argument.get("type", ""), "")
+
+        table = f"""### `{name}`
+
+| Name | Default | Type |
+|------|---------|------|
+| `{name}` | {default} | {arg_type} |
 """
         tables.append(table)
 
@@ -311,11 +337,6 @@ def convert_section_to_tables(section_content: str, section_type: str = 'options
 | `{opt['flags']}` | {opt['default']} | {opt['type']} |
 """
             elif section_type == 'arguments':
-                # Check if Argument "Type" is click.Path(exists=True)
-                # This returns bytes object "<click.types.Path object at ...>"
-                # We don't want to show the full object, just "File Path"
-                # if "click.types.Path" in str(opt['type']):
-                #     opt['type'] = 'File Path'
                 # Arguments don't have flags, just the name
                 table = f"""### `{opt['name']}`
 
@@ -359,6 +380,8 @@ def _convert_section(content: str, section_name: str, section_type: str, json_op
 
     if json_options and section_type == 'options':
         new_section_content = build_options_table_from_json(json_options)
+    elif json_options and section_type == 'arguments':
+        new_section_content = build_arguments_table_from_json(json_options)
     else:
         new_section_content = convert_section_to_tables(section_content, section_type)
 
@@ -371,9 +394,9 @@ def convert_options_to_tables(content: str, json_options: list = None) -> str:
     return _convert_section(content, 'Options', 'options', json_options=json_options)
 
 
-def convert_arguments_to_tables(content: str) -> str:
+def convert_arguments_to_tables(content: str, json_arguments: list = None) -> str:
     """Convert the ## Arguments section from bullet points to markdown tables."""
-    return _convert_section(content, 'Arguments', 'arguments')
+    return _convert_section(content, 'Arguments', 'arguments', json_options=json_arguments)
 
 
 def remove_empty_arguments_section(content: str) -> str:
@@ -395,7 +418,8 @@ def format_markdown_file(
     source_file: Optional[str] = None,
     line_number: Optional[int] = None,
     release_tag: Optional[str] = None,
-    options: list = None
+    options: list = None,
+    arguments: list = None
 ) -> str:
     """Apply all formatting transformations to markdown content.
 
@@ -405,13 +429,14 @@ def format_markdown_file(
         line_number: Optional line number in source file
         release_tag: Optional git tag for GitHub URL (e.g., 'v0.18.3')
         options: Optional structured option metadata from inspect_click_commands.py
+        arguments: Optional structured argument metadata from inspect_click_commands.py
 
     Returns:
         Modified content with all transformations applied
     """
     content = format_usage_code_block(content)
     content = convert_options_to_tables(content, json_options=options)
-    content = convert_arguments_to_tables(content)
+    content = convert_arguments_to_tables(content, json_arguments=arguments)
     content = remove_empty_arguments_section(content)
     content = remove_h1_title(content)
 
@@ -461,14 +486,16 @@ def main(args):
 
         # Look up source info
         options = None
+        arguments = None
         if func_name in source_info:
             cmd_info = source_info[func_name]
             source_file = cmd_info.get('source_file')
             line_number = cmd_info.get('line_number')
             options = cmd_info.get('options', []) or None
+            arguments = cmd_info.get('arguments', []) or None
 
         # Apply all formatting transformations (including source link if available)
-        formatted = format_markdown_file(content, source_file, line_number, args.release_tag, options=options)
+        formatted = format_markdown_file(content, source_file, line_number, args.release_tag, options=options, arguments=arguments)
 
         # Write back to file with frontmatter
         print(f"Writing formatted content to {filename}")

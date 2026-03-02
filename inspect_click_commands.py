@@ -15,7 +15,7 @@ from format_markdown import load_source_info
 
 def classify_option(param: click.Option) -> str:
     """
-    Classify a Click option into a documentation-friendly type.
+    Classify boolean options into more specific categories for documentation purposes.
     
     Returns one of:
         - "boolean-flag"
@@ -36,11 +36,12 @@ def classify_option(param: click.Option) -> str:
     return "other"
 
 
-def inspect_command(command: click.Command) -> List[Dict]:
+def inspect_command(command: click.Command) -> Dict[str, List[Dict]]:
     """
-    Inspect a Click command and return structured option metadata.
+    Inspect a Click command and return structured option and argument metadata.
     """
-    results = []
+    options = []
+    arguments = []
 
     for param in command.params:
         if isinstance(param, click.Option):
@@ -54,9 +55,18 @@ def inspect_command(command: click.Command) -> List[Dict]:
                 "type": type(param.type).__name__,
                 "help": param.help or "",
             }
-            results.append(option_info)
+            options.append(option_info)
+        elif isinstance(param, click.Argument):
+            arg_info = {
+                "name": param.name,
+                "type": type(param.type).__name__,
+                "default": param.default,
+                "required": param.required,
+                "nargs": param.nargs,
+            }
+            arguments.append(arg_info)
 
-    return results
+    return {"options": options, "arguments": arguments}
 
 def main(args):
 
@@ -75,7 +85,8 @@ def main(args):
         func_name = name_to_func.get(name)
         if func_name and func_name in source_info:
             cmd_metadata = inspect_command(cmd)
-            source_info[func_name]['options'] = cmd_metadata
+            source_info[func_name]['options'] = cmd_metadata['options']
+            source_info[func_name]['arguments'] = cmd_metadata['arguments']
             print(f"Updated source_info for command: {name}")
         else:
             print(f"Command {name} not found in source_info, skipping.")
