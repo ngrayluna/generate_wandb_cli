@@ -50,6 +50,7 @@ def inspect_command(command: click.Command) -> List[Dict]:
                 "required": param.required,
                 "classification": classify_option(param),
                 "type": type(param.type).__name__,
+                "help": param.help or "",
             }
             results.append(option_info)
 
@@ -74,9 +75,11 @@ def main(args):
 
     # Save the updated source_info back to the JSON file
     with open(args.source_info, 'w', encoding='utf-8') as f:
-        json.dump(source_info, f)
+        print(f"Saving updated source_info with option metadata to {args.source_info}")
+        json.dump(source_info, f, indent=2)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Inspect Click commands and extract option metadata")
     parser.add_argument("--source-info", type=str, required=True, help="Path to source_info JSON file")
     args = parser.parse_args()
+    main(args)

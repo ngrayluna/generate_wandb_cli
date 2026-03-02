@@ -59,13 +59,19 @@ python get_public_commands.py --output-json "$OUTPUT_JSON"
 # Extract command names from JSON
 PUBLIC_COMMANDS=$(python -c "import json; print(' '.join(cmd['func_name'] for cmd in json.load(open('$OUTPUT_JSON'))))")
 
-# Generate markdown documentation for each public command
+# Generate markdown documentation for each (public) command
 for cmd in $PUBLIC_COMMANDS; do
     echo "Generating docs for: $cmd"
     mdclick dumps --baseModule wandb.cli.cli --baseCommand "$cmd" --docsPath "$OUTPUT_DIR"
 done
 
-# Format the generated markdown files with source links
+# Extract Click option metadata from source and update source_info JSON
+# This is a work around, md-click-2 misses slash commands and doesn't differentiate between BOOL Flag vs BOOL types.
+echo "Extracting Click option metadata..."
+python inspect_click_commands.py --source-info "$OUTPUT_JSON"
+
+# Format the generated markdown files
+echo "Formatting markdown files..."
 if [ -n "$RELEASE_TAG" ]; then
     python format_markdown.py --markdown_directory "$OUTPUT_DIR" --source-info "$OUTPUT_JSON" --release-tag "$RELEASE_TAG"
 else
