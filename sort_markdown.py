@@ -16,7 +16,6 @@ which commands are groups and create directories for them.
 import argparse
 import json
 import os
-from get_public_commands import get_public_commands_with_source
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -38,10 +37,15 @@ if __name__ == "__main__":
 
     print(f"Sorting markdown files in directory: {args.output_markdown}\nUsing source info from: {args.source_info}")
 
-    # Get public commands with source information
-    public_commands = get_public_commands_with_source()
-    with open(args.source_info, "w") as f:
-        json.dump(public_commands, f, indent=4)
+    # Load existing source info (already generated and enriched by earlier pipeline steps)
+    with open(args.source_info, "r") as f:
+        source_data = json.load(f)
+
+    # Support both list format and dict format
+    if isinstance(source_data, dict):
+        public_commands = list(source_data.values())
+    else:
+        public_commands = source_data
 
     # Get list of click groups from the commands
     click_group = []

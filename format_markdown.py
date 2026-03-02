@@ -219,6 +219,27 @@ def parse_option_block(block: str) -> Optional[dict]:
     }
 
 
+_TYPE_DISPLAY_NAMES = {
+    "StringParamType": "STR",
+    "IntParamType": "INT",
+    "IntRange": "INT",
+    "FloatParamType": "FLOAT",
+    "FloatRange": "FLOAT",
+    "BoolParamType": "BOOL",
+}
+
+
+def normalize_option_type(raw_type: str, classification: str) -> str:
+    """Map Click type class names to clean display names.
+
+    Returns one of: STR, INT, FLOAT, BOOL, BOOL Flag, or the raw type name
+    as a fallback for uncommon types (e.g. Choice, Path, File).
+    """
+    if classification in ("boolean-flag", "boolean-dual-flag"):
+        return "BOOL Flag"
+    return _TYPE_DISPLAY_NAMES.get(raw_type, raw_type)
+
+
 def build_options_table_from_json(json_options: list) -> str:
     """Build markdown option tables from structured JSON option metadata.
 
@@ -233,7 +254,10 @@ def build_options_table_from_json(json_options: list) -> str:
         name = option["name"]
         description = option.get("help") or "No description available."
         default = option.get("default", "")
-        opt_type = option.get("type", "")
+        opt_type = normalize_option_type(
+            option.get("type", ""),
+            option.get("classification", ""),
+        )
 
         # Build flags string based on classification
         if option.get("classification") == "boolean-dual-flag":
@@ -277,10 +301,6 @@ def convert_section_to_tables(section_content: str, section_type: str = 'options
         opt = parse_option_block(block)
         if opt:
             if section_type == 'options':
-                # Options have flags
-                # To do: Insert code here that does additional checks on options
-                # and their types. This is a patch since md-click-2 doesn't include structured metadata.
-                # For example, if opt['type'] is "BOOLEAN" and flags include both --
                 table = f"""### `{opt['name']}`
 
 {opt['description']}                
@@ -293,8 +313,8 @@ def convert_section_to_tables(section_content: str, section_type: str = 'options
                 # Check if Argument "Type" is click.Path(exists=True)
                 # This returns bytes object "<click.types.Path object at ...>"
                 # We don't want to show the full object, just "File Path"
-                if "click.types.Path" in str(opt['type']):
-                    opt['type'] = 'File Path'
+                # if "click.types.Path" in str(opt['type']):
+                #     opt['type'] = 'File Path'
                 # Arguments don't have flags, just the name
                 table = f"""### `{opt['name']}`
 
