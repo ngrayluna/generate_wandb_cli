@@ -226,6 +226,7 @@ _TYPE_DISPLAY_NAMES = {
     "FloatParamType": "FLOAT",
     "FloatRange": "FLOAT",
     "BoolParamType": "BOOL",
+    "Path": "PATH",
 }
 
 

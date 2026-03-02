@@ -81,6 +81,7 @@ def main(args):
             print(f"Command {name} not found in source_info, skipping.")
 
     # Save the updated source_info back to the JSON file
+    # Overwrite the original source_info JSON with the enriched metadata
     with open(args.source_info, 'w', encoding='utf-8') as f:
         print(f"Saving updated source_info with option metadata to {args.source_info}")
         json.dump(source_info, f, indent=2)
