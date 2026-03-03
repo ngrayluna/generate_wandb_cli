@@ -1,6 +1,19 @@
 #!/usr/bin/env python
-"""Get list of public (non-hidden) CLI commands for documentation generation."""
+"""
+Get list of public (non-hidden) CLI commands for documentation generation.
+
+Usage:
+    # Print function names to console
+    python get_public_commands.py
+
+    # Print function names with source file and line number (tab-separated)
+    python get_public_commands.py --with-source
+
+    # Write command info with source locations to JSON file
+    python get_public_commands.py --output-json commands_with_source.json
+"""
 import argparse
+import click
 import inspect
 import json
 from wandb.cli.cli import cli
@@ -38,6 +51,7 @@ def get_public_commands_with_source():
     result = []
 
     for name, cmd in commands.items():
+        # Only include commands that are not hidden (hidden=False)
         if not getattr(cmd, 'hidden', False):
             func_name = cmd.callback.__name__ if cmd.callback else name
             source_file, line_number = get_command_source_info(cmd)
@@ -46,16 +60,14 @@ def get_public_commands_with_source():
                 'name': name,              # CLI name (e.g., 'docker-run')
                 'func_name': func_name,    # Python function name (e.g., 'docker_run')
                 'source_file': source_file,
-                'line_number': line_number
+                'line_number': line_number,
+                "is_click_group": isinstance(cmd, click.Group)  # True if this command is a group
             })
-
     return result
-
 
 def get_public_commands():
     """Return list of public command function names (excluding hidden commands)."""
     return [cmd['func_name'] for cmd in get_public_commands_with_source()]
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -78,10 +90,12 @@ if __name__ == "__main__":
         commands = get_public_commands_with_source()
         with open(args.output_json, 'w', encoding='utf-8') as f:
             json.dump(commands, f, indent=2)
-        print(f"Wrote {len(commands)} commands to {args.output_json}")
+        print(f"Wrote {len(commands)} commands to {args.output_json}\n")
 
     elif args.with_source:
-        # Print with source info (tab-separated)
+        # Print commands with source file and line number to console
+        # Does not save to file, just for debugging purposes.
+        # Format: func_name \t line_number \t source_file
         for cmd in get_public_commands_with_source():
             print(f"{cmd['func_name']}\t{cmd['line_number']}\t{cmd['source_file']}")
 
