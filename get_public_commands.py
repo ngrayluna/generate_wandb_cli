@@ -42,13 +42,13 @@ def get_command_source_info(cmd):
 
 
 def get_public_commands_with_source():
-    """Return list of public commands with their source file and line number.
+    """Return public commands with their source file and line number.
 
     Returns:
-        List of dicts with keys: name, func_name, source_file, line_number
+        Dict mapping func_name -> {name, func_name, source_file, line_number, is_click_group}
     """
     commands = getattr(cli, 'commands', {})
-    result = []
+    result = {}
 
     for name, cmd in commands.items():
         # Only include commands that are not hidden (hidden=False)
@@ -56,18 +56,18 @@ def get_public_commands_with_source():
             func_name = cmd.callback.__name__ if cmd.callback else name
             source_file, line_number = get_command_source_info(cmd)
 
-            result.append({
+            result[func_name] = {
                 'name': name,              # CLI name (e.g., 'docker-run')
                 'func_name': func_name,    # Python function name (e.g., 'docker_run')
                 'source_file': source_file,
                 'line_number': line_number,
                 "is_click_group": isinstance(cmd, click.Group)  # True if this command is a group
-            })
+            }
     return result
 
 def get_public_commands():
     """Return list of public command function names (excluding hidden commands)."""
-    return [cmd['func_name'] for cmd in get_public_commands_with_source()]
+    return list(get_public_commands_with_source().keys())
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -96,7 +96,7 @@ if __name__ == "__main__":
         # Print commands with source file and line number to console
         # Does not save to file, just for debugging purposes.
         # Format: func_name \t line_number \t source_file
-        for cmd in get_public_commands_with_source():
+        for cmd in get_public_commands_with_source().values():
             print(f"{cmd['func_name']}\t{cmd['line_number']}\t{cmd['source_file']}")
 
     else:

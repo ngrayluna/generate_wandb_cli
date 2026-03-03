@@ -20,11 +20,7 @@ def load_source_info(filepath: str) -> dict:
         Dict mapping func_name -> {name, func_name, source_file, line_number, ...}
     """
     with open(filepath, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    # Support both list format (original) and dict format (after inspect_click_commands)
-    if isinstance(data, list):
-        return {cmd['func_name']: cmd for cmd in data}
-    return data
+        return json.load(f)
 
 def _github_button(href_links):
     """Add a GitHub button with the given URL.

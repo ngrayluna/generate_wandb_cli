@@ -39,13 +39,7 @@ if __name__ == "__main__":
 
     # Load existing source info (already generated and enriched by earlier pipeline steps)
     with open(args.source_info, "r") as f:
-        source_data = json.load(f)
-
-    # Support both list format and dict format
-    if isinstance(source_data, dict):
-        public_commands = list(source_data.values())
-    else:
-        public_commands = source_data
+        public_commands = list(json.load(f).values())
 
     # Get list of click groups from the commands
     click_group = []

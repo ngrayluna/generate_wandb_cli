@@ -57,7 +57,7 @@ mkdir -p "$OUTPUT_DIR"
 python get_public_commands.py --output-json "$OUTPUT_JSON"
 
 # Extract command names from JSON
-PUBLIC_COMMANDS=$(python -c "import json; print(' '.join(cmd['func_name'] for cmd in json.load(open('$OUTPUT_JSON'))))")
+PUBLIC_COMMANDS=$(python -c "import json; print(' '.join(json.load(open('$OUTPUT_JSON')).keys()))")
 
 # Generate markdown documentation for each (public) command
 for cmd in $PUBLIC_COMMANDS; do
