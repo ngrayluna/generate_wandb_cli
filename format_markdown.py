@@ -161,6 +161,24 @@ def format_flags(usage_str: str) -> str:
     all_flags = short_flags + long_flags
     return ', '.join(all_flags)
 
+def add_description_heading(content: str) -> str:
+    """Add a '## Description' heading after the <GitHubLink ... /> line."""
+    return re.sub(
+        r'(<GitHubLink\s+url="[^"]*"\s*/>)',
+        r'\1\n\n## Description',
+        content,
+    )
+
+
+def move_usage_before_description(content: str) -> str:
+    """Move the ## Usage section above the ## Description section."""
+    pattern = r'(## Description\n.*?)(## Usage\n.*?)(?=\n## |\Z)'
+    match = re.search(pattern, content, re.DOTALL)
+    if not match:
+        return content
+    return content[:match.start()] + match.group(2) + '\n' + match.group(1) + content[match.end():]
+
+
 def format_examples_section(content: str) -> str:
     """Replace 'Examples:' with '## Examples' as a markdown heading."""
     return content.replace('Examples:', '## Examples')
@@ -450,6 +468,8 @@ def format_markdown_file(
     # Add source link if source info is provided
     if source_file and line_number:
         content = add_source_link(content, source_file, line_number, release_tag)
+        content = add_description_heading(content)
+        content = move_usage_before_description(content)
 
     return content
 
