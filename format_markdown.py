@@ -161,6 +161,10 @@ def format_flags(usage_str: str) -> str:
     all_flags = short_flags + long_flags
     return ', '.join(all_flags)
 
+def format_examples_section(content: str) -> str:
+    """Replace 'Examples:' with '## Examples' as a markdown heading."""
+    return content.replace('Examples:', '## Examples')
+
 
 def parse_option_block(block: str) -> Optional[dict]:
     """Parse a single option block and return its components.
@@ -440,6 +444,7 @@ def format_markdown_file(
     content = convert_arguments_to_tables(content, json_arguments=arguments)
     content = remove_empty_arguments_section(content)
     content = remove_cli_help_section(content)
+    content = format_examples_section(content)
     content = remove_h1_title(content)
 
     # Add source link if source info is provided
