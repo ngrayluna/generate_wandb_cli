@@ -286,9 +286,10 @@ def build_options_table_from_json(json_options: list) -> str:
             all_opts = option.get("opts", []) + option.get("secondary_opts", [])
             flags = ", ".join(all_opts)
 
-        rows.append(f"| `{flags}` | {default} | {opt_type} | {description} |")
+        desc_with_default = f"{description} **Default:** {default}"
+        rows.append(f"| `{flags}` | {opt_type} | {desc_with_default} |")
 
-    header = "| Flag | Default | Type | Description |\n|------|---------|------|-------------|"
+    header = "| Flag | Type | Description |\n|------|------|-------------|"
     return header + "\n" + "\n".join(rows) + "\n"
 
 
@@ -340,9 +341,9 @@ def convert_section_to_tables(section_content: str, section_type: str = 'options
         return ''
 
     if section_type == 'options':
-        header = "| Flag | Default | Type | Description |\n|------|---------|------|-------------|"
+        header = "| Flag | Type | Description |\n|------|------|-------------|"
         rows = [
-            f"| `{opt['flags']}` | {opt['default']} | {opt['type']} | {opt['description']}\n |"
+            f"| `{opt['flags']}` | {opt['type']} | {opt['description']} **Default:** {opt['default']} |"
             for opt in parsed
         ]
         return header + "\n" + "\n".join(rows) + "\n"
