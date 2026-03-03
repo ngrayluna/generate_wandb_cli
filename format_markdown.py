@@ -395,6 +395,11 @@ def convert_arguments_to_tables(content: str, json_arguments: list = None) -> st
     return _convert_section(content, 'Arguments', 'arguments', json_options=json_arguments)
 
 
+def remove_cli_help_section(content: str) -> str:
+    """Remove the ## CLI Help section (heading and its fenced code block)."""
+    return re.sub(r'## CLI Help\n.*?(?=\n## |\Z)', '', content, flags=re.DOTALL)
+
+
 def remove_empty_arguments_section(content: str) -> str:
     """Remove the ## Arguments section if it's empty.
 
@@ -434,6 +439,7 @@ def format_markdown_file(
     content = convert_options_to_tables(content, json_options=options)
     content = convert_arguments_to_tables(content, json_arguments=arguments)
     content = remove_empty_arguments_section(content)
+    content = remove_cli_help_section(content)
     content = remove_h1_title(content)
 
     # Add source link if source info is provided
