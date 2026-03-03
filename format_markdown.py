@@ -260,17 +260,16 @@ def normalize_click_type(raw_type: str, classification: str) -> str:
 
 
 def build_options_table_from_json(json_options: list) -> str:
-    """Build markdown option tables from structured JSON option metadata.
+    """Build a single markdown table from structured JSON option metadata.
 
     Args:
         json_options: List of option dicts from inspect_click_commands.py
 
     Returns:
-        Formatted markdown string with tables for each option
+        Formatted markdown string with one consolidated options table
     """
-    tables = []
+    rows = []
     for option in json_options:
-        name = option["name"]
         description = option.get("help") or "No description available."
         default = option.get("default", "")
         opt_type = normalize_click_type(
@@ -287,17 +286,11 @@ def build_options_table_from_json(json_options: list) -> str:
             all_opts = option.get("opts", []) + option.get("secondary_opts", [])
             flags = ", ".join(all_opts)
 
-        table = f"""### `{name}`
+        desc_with_default = f"{description} **Default:** {default}"
+        rows.append(f"| `{flags}` | {opt_type} | {desc_with_default} |")
 
-{description}
-
-| Flag | Default | Type |
-|------|---------|------|
-| `{flags}` | {default} | {opt_type} |
-"""
-        tables.append(table)
-
-    return "\n".join(tables)
+    header = "| Flag | Type | Description |\n|------|------|-------------|"
+    return header + "\n" + "\n".join(rows) + "\n"
 
 
 def build_arguments_table_from_json(json_arguments: list) -> str:
@@ -309,21 +302,15 @@ def build_arguments_table_from_json(json_arguments: list) -> str:
     Returns:
         Formatted markdown string with tables for each argument
     """
-    tables = []
+    rows = []
     for argument in json_arguments:
         name = argument["name"]
         default = argument.get("default", "")
         arg_type = normalize_click_type(argument.get("type", ""), "")
+        rows.append(f"| `{name}` | {default} | {arg_type} |")
 
-        table = f"""### `{name}`
-
-| Name | Default | Type |
-|------|---------|------|
-| `{name}` | {default} | {arg_type} |
-"""
-        tables.append(table)
-
-    return "\n".join(tables)
+    header = "| Name | Default | Type |\n|------|---------|------|"
+    return header + "\n" + "\n".join(rows) + "\n"
 
 
 def convert_section_to_tables(section_content: str, section_type: str = 'options') -> str:
@@ -341,38 +328,35 @@ def convert_section_to_tables(section_content: str, section_type: str = 'options
     blocks = re.split(r'(?=^\* `[^`]+`:)', section_content, flags=re.MULTILINE)
     blocks = [b.strip() for b in blocks if b.strip()]
 
-    tables = []
-    for block in blocks:
-        opt = parse_option_block(block)
-        if opt:
-            if section_type == 'options':
-                table = f"""### `{opt['name']}`
+    parsed = [parse_option_block(b) for b in blocks]
+    parsed = [opt for opt in parsed if opt]
 
-{opt['description']}                
+    if not parsed:
+        return ''
 
-| Flag | Default | Type | 
-|------|---------|------|
-| `{opt['flags']}` | {opt['default']} | {opt['type']} |
-"""
-            elif section_type == 'arguments':
-                # Arguments don't have flags, just the name
-                table = f"""### `{opt['name']}`
+    if section_type == 'options':
+        header = "| Flag | Type | Description |\n|------|------|-------------|"
+        rows = [
+            f"| `{opt['flags']}` | {opt['type']} | {opt['description']} **Default:** {opt['default']} |"
+            for opt in parsed
+        ]
+        return header + "\n" + "\n".join(rows) + "\n"
 
-| Name | Default | Type |
-|------|---------|------|
-| `{opt['name']}` | {opt['default']} | {opt['type']} |
-"""                
-            else:
-                # Fallback to a generic table if section_type is unrecognized
-                table = f"""### `{opt['name']}`
+    if section_type == 'arguments':
+        header = "| Name | Default | Type |\n|------|---------|------|"
+        rows = [
+            f"| `{opt['name']}` | {opt['default']} | {opt['type']} |"
+            for opt in parsed
+        ]
+        return header + "\n" + "\n".join(rows) + "\n"
 
-| Name | Default | Type | Description |
-|------|---------|------|-------------|
-| `{opt['name']}` | {opt['default']} | {opt['type']} | {opt['description']} |
-"""
-            tables.append(table)
-
-    return '\n'.join(tables)
+    # Fallback for unrecognized section types
+    header = "| Name | Default | Type | Description |\n|------|---------|------|-------------|"
+    rows = [
+        f"| `{opt['name']}` | {opt['default']} | {opt['type']} | {opt['description']} |"
+        for opt in parsed
+    ]
+    return header + "\n" + "\n".join(rows) + "\n"
 
 
 def _convert_section(content: str, section_name: str, section_type: str, json_options: list = None) -> str:
