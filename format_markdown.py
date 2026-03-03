@@ -260,17 +260,16 @@ def normalize_click_type(raw_type: str, classification: str) -> str:
 
 
 def build_options_table_from_json(json_options: list) -> str:
-    """Build markdown option tables from structured JSON option metadata.
+    """Build a single markdown table from structured JSON option metadata.
 
     Args:
         json_options: List of option dicts from inspect_click_commands.py
 
     Returns:
-        Formatted markdown string with tables for each option
+        Formatted markdown string with one consolidated options table
     """
-    tables = []
+    rows = []
     for option in json_options:
-        name = option["name"]
         description = option.get("help") or "No description available."
         default = option.get("default", "")
         opt_type = normalize_click_type(
@@ -287,17 +286,10 @@ def build_options_table_from_json(json_options: list) -> str:
             all_opts = option.get("opts", []) + option.get("secondary_opts", [])
             flags = ", ".join(all_opts)
 
-        table = f"""### `{name}`
+        rows.append(f"| `{flags}` | {default} | {opt_type} | {description} |")
 
-{description}
-
-| Flag | Default | Type |
-|------|---------|------|
-| `{flags}` | {default} | {opt_type} |
-"""
-        tables.append(table)
-
-    return "\n".join(tables)
+    header = "| Flag | Default | Type | Description |\n|------|---------|------|-------------|"
+    return header + "\n" + "\n".join(rows) + "\n"
 
 
 def build_arguments_table_from_json(json_arguments: list) -> str:
@@ -341,36 +333,37 @@ def convert_section_to_tables(section_content: str, section_type: str = 'options
     blocks = re.split(r'(?=^\* `[^`]+`:)', section_content, flags=re.MULTILINE)
     blocks = [b.strip() for b in blocks if b.strip()]
 
+    parsed = [parse_option_block(b) for b in blocks]
+    parsed = [opt for opt in parsed if opt]
+
+    if not parsed:
+        return ''
+
+    if section_type == 'options':
+        header = "| Flag | Default | Type | Description |\n|------|---------|------|-------------|"
+        rows = [
+            f"| `{opt['flags']}` | {opt['default']} | {opt['type']} | {opt['description']}\n |"
+            for opt in parsed
+        ]
+        return header + "\n" + "\n".join(rows) + "\n"
+
     tables = []
-    for block in blocks:
-        opt = parse_option_block(block)
-        if opt:
-            if section_type == 'options':
-                table = f"""### `{opt['name']}`
-
-{opt['description']}                
-
-| Flag | Default | Type | 
-|------|---------|------|
-| `{opt['flags']}` | {opt['default']} | {opt['type']} |
-"""
-            elif section_type == 'arguments':
-                # Arguments don't have flags, just the name
-                table = f"""### `{opt['name']}`
+    for opt in parsed:
+        if section_type == 'arguments':
+            table = f"""### `{opt['name']}`
 
 | Name | Default | Type |
 |------|---------|------|
 | `{opt['name']}` | {opt['default']} | {opt['type']} |
-"""                
-            else:
-                # Fallback to a generic table if section_type is unrecognized
-                table = f"""### `{opt['name']}`
+"""
+        else:
+            table = f"""### `{opt['name']}`
 
 | Name | Default | Type | Description |
 |------|---------|------|-------------|
 | `{opt['name']}` | {opt['default']} | {opt['type']} | {opt['description']} |
 """
-            tables.append(table)
+        tables.append(table)
 
     return '\n'.join(tables)
 
