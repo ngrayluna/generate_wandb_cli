@@ -146,6 +146,28 @@ def format_usage_code_block(content: str) -> str:
     return re.sub(pattern, replace_usage, content, flags=re.DOTALL)
 
 
+def format_code_block(content: str) -> str:
+    """Convert indented '$ wandb ...' lines into fenced bash code blocks.
+
+    Before:
+        Verify the currently configured W&B instance.
+
+            $ wandb verify --host https://my-wandb-instance.com
+
+    After:
+        Verify the currently configured W&B instance.
+
+        ```bash
+        wandb verify --host https://my-wandb-instance.com
+        ```
+    """
+    def replace_match(match):
+        command = match.group(1).strip()
+        return f"```bash\n{command}\n```"
+
+    return re.sub(r'^\s*\$ (.+)$', replace_match, content, flags=re.MULTILINE)
+
+
 def format_flags(usage_str: str) -> str:
     """Convert usage string to formatted flags (short flag first, then long flag).
 
@@ -442,6 +464,7 @@ def format_markdown_file(
         Modified content with all transformations applied
     """
     content = format_usage_code_block(content)
+    content = format_code_block(content)
     content = convert_options_to_tables(content, json_options=options)
     content = convert_arguments_to_tables(content, json_arguments=arguments)
     content = remove_empty_arguments_section(content)
