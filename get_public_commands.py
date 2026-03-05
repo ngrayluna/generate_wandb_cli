@@ -2,6 +2,8 @@
 """
 Get list of public (non-hidden) CLI commands for documentation generation.
 
+Inspects Click commands and options to extract structured metadata for documentation generation.
+
 Usage:
     # Print function names to console
     python get_public_commands.py
@@ -17,9 +19,65 @@ import click
 import inspect
 import json
 from wandb.cli.cli import cli
+from typing import Dict, Tuple, Optional, List
 
+def classify_option(param: click.Option) -> str:
+    """
+    Classify boolean options into more specific categories for documentation purposes.
+    
+    Returns one of:
+        - "boolean-flag"
+        - "boolean-dual-flag"
+        - "boolean-value"
+        - "other"
 
-def get_command_source_info(cmd):
+    Where "boolean-flag" is a simple flag (e.g. --verbose), "boolean-dual-flag" is a flag that has both positive and negative forms (e.g. --feature / --no-feature), "boolean-value" is an option that takes a boolean value (e.g. --enable-feature true/false), and "other" is any other type of option.
+    """
+    if param.is_flag:
+        if param.secondary_opts:
+            return "boolean-dual-flag"
+        return "boolean-flag"
+
+    if isinstance(param.type, click.types.BoolParamType):
+        return "boolean-value"
+
+    return "other"
+
+def inspect_command(command: click.Command) -> Dict[str, List[Dict]]:
+    """
+    Inspect a Click command and return structured option and argument metadata.
+    """
+    options = []
+    arguments = []
+
+    for param in command.params:
+        if isinstance(param, click.Option):
+            option_info = {
+                "name": param.name,
+                "description": param.help or "",
+                "opts": param.opts,
+                "secondary_opts": param.secondary_opts,
+                "default": param.default,
+                "required": param.required,
+                "hidden": param.hidden,
+                "classification": classify_option(param),
+                "type": type(param.type).__name__,
+                "help": param.help or "",
+            }
+            options.append(option_info)
+        elif isinstance(param, click.Argument):
+            arg_info = {
+                "name": param.name,
+                "type": type(param.type).__name__,
+                "default": param.default,
+                "required": param.required,
+                "nargs": param.nargs,
+            }
+            arguments.append(arg_info)
+
+    return {"options": options, "arguments": arguments}
+
+def get_command_source_info(cmd) -> Tuple[Optional[str], Optional[int]]:
     """Get the source file and line number for a Click command.
 
     Args:
@@ -45,7 +103,7 @@ def get_public_commands_with_source():
     """Return public commands with their source file and line number.
 
     Returns:
-        Dict mapping func_name -> {name, func_name, source_file, line_number, is_click_group}
+        Dict mapping func_name -> {name, func_name, source_file, line_number, is_click_group, options, arguments}
     """
     commands = getattr(cli, 'commands', {})
     result = {}
@@ -54,14 +112,19 @@ def get_public_commands_with_source():
         # Only include commands that are not hidden (hidden=False)
         if not getattr(cmd, 'hidden', False):
             func_name = cmd.callback.__name__ if cmd.callback else name
+
+            cmd_metadata = inspect_command(cmd)
             source_file, line_number = get_command_source_info(cmd)
 
             result[func_name] = {
                 'name': name,              # CLI name (e.g., 'docker-run')
                 'func_name': func_name,    # Python function name (e.g., 'docker_run')
+                'description': cmd.help or "",  # Command description from Click
                 'source_file': source_file,
                 'line_number': line_number,
-                "is_click_group": isinstance(cmd, click.Group)  # True if this command is a group
+                "is_click_group": isinstance(cmd, click.Group),  # True if this command is a group
+                "options": cmd_metadata["options"],  # List of option metadata
+                "arguments": cmd_metadata["arguments"],  # List of argument metadata
             }
     return result
 
