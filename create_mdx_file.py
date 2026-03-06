@@ -81,40 +81,69 @@ def normalize_type(raw_type: str, classification: str) -> str:
     return _TYPE_DISPLAY_NAMES.get(raw_type, raw_type)
 
 
-# test_command = "login"
-# cmd_name = json_file.get(test_command, {}).get("name", [])
+def generate_mdx(command_info, command_path: list[str]):
+    """Generate an MDX file for a command and recurse into subcommands.
 
-### Main logic to read source info and generate MDX file for "login" command
-with open('source_info_debug.json', 'r', encoding='utf-8') as file:
-    json_file = json.load(file)
-
-for command_name, command_info in json_file.items():
-    arguments = command_info.get("arguments","")
+    Args:
+        command_info: Dict of command metadata from source_info_debug.json.
+        command_path: List of command name segments, e.g. ["server", "start"].
+    """
+    arguments = command_info.get("arguments", "")
     options = command_info.get("options", "")
-    line_number = command_info.get("line_number","")
-    source_file = command_info.get("source_file","")
+    line_number = command_info.get("line_number", "")
+    source_file = command_info.get("source_file", "")
     examples = command_info.get("examples", "")
     description = command_info.get("description", "")
+    subcommands = command_info.get("subcommands", {})
+
+    display_name = " ".join(command_path)
+    file_slug = "-".join(command_path)
 
     all_arguments = "\n".join([
         f"| `{arg['name']}` | {normalize_type(arg['type'], arg.get('classification', ''))} | {arg['default']} | {arg['required']} |" for arg in arguments
     ])
 
-    # Only include options that are not hidden
     all_options = "\n".join([
         f"| `{', '.join(opt['opts'])}` | {normalize_type(opt['type'], opt.get('classification', ''))} | {opt['description']} **Default**: {opt['default']} |" for opt in options if not opt['hidden']
     ])
 
+    # Build subcommands listing for group pages
+    subcommands_section = ""
+    if subcommands:
+        links = []
+        for sub_name, sub_info in subcommands.items():
+            sub_slug = "-".join(command_path + [sub_name])
+            sub_display = " ".join(command_path + [sub_name])
+            sub_desc = sub_info.get("description", "").split("\n")[0]
+            links.append(f"| [`wandb {sub_display}`](wandb-{sub_slug}) | {sub_desc} |")
+        subcommands_section = (
+            "\n## Subcommands\n\n"
+            "| Command | Description |\n"
+            "|---------|-------------|\n"
+            + "\n".join(links)
+            + "\n"
+        )
 
-    with open(f"output_debugz/wandb-{command_name}.mdx", "w", encoding="utf-8") as f:
+    with open(f"output_debugz/wandb-{file_slug}.mdx", "w", encoding="utf-8") as f:
         f.write(mdx_template.format(
-            name=command_name,
-            description=description,
+            name=display_name,
+            description=description + subcommands_section,
             options=all_options,
             arguments=all_arguments,
             examples=format_code_block(examples),
-            import_statements = github_import_statement(),
+            import_statements=github_import_statement(),
             github_path=format_github_button(source_file, line_number),
-            usage=json_file.get(command_name, {}).get("usage", "")
-            )
-        )
+            usage=command_info.get("usage", ""),
+        ))
+
+    # Recurse into subcommands
+    for sub_name, sub_info in subcommands.items():
+        generate_mdx(sub_info, command_path + [sub_name])
+
+
+### Main logic to read source info and generate MDX files
+with open('source_info_debug.json', 'r', encoding='utf-8') as file:
+    json_file = json.load(file)
+
+for command_name, command_info in json_file.items():
+    generate_mdx(command_info, [command_info.get("name", command_name)])
