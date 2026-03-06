@@ -122,36 +122,53 @@ def iter_commands(
             yield from iter_commands(sub, sub_ctx)
 
 
+def build_command_info(name: str, cmd: click.Command) -> Dict:
+    """Build metadata dict for a single Click command, recursing into groups."""
+    func_name = cmd.callback.__name__ if cmd.callback else name
+    cmd_metadata = inspect_command(cmd)
+    source_file, line_number = get_command_source_file_info(cmd)
+
+    info = {
+        'name': name,
+        'func_name': func_name,
+        'description': cmd.help.split("Examples:")[0].strip() if "Examples:" in (cmd.help or "") else (cmd.help or ""),
+        'examples': cmd.help.split("Examples:")[-1].strip() if "Examples:" in (cmd.help or "") else "",
+        'usage': click.Context(cmd, info_name=name).get_usage(),
+        'source_file': source_file,
+        'line_number': line_number,
+        "is_click_group": isinstance(cmd, click.Group),
+        "options": cmd_metadata["options"],
+        "arguments": cmd_metadata["arguments"],
+    }
+
+    if isinstance(cmd, click.Group):
+        ctx = click.Context(cmd, info_name=name)
+        subcommands = {}
+        for sub_name in cmd.list_commands(ctx):
+            sub_cmd = cmd.get_command(ctx, sub_name)
+            if sub_cmd is None:
+                continue
+            if getattr(sub_cmd, 'hidden', False):
+                continue
+            subcommands[sub_name] = build_command_info(sub_name, sub_cmd)
+        info["subcommands"] = subcommands
+
+    return info
+
+
 def get_public_commands_with_source():
     """Return public commands with their source file and line number.
 
     Returns:
-        Dict mapping func_name -> {name, func_name, source_file, line_number, is_click_group, options, arguments}
+        Dict mapping func_name -> {name, func_name, source_file, line_number, is_click_group, options, arguments, subcommands?}
     """
     commands = getattr(cli, 'commands', {})
     result = {}
 
     for name, cmd in commands.items():
-        # Only include commands that are not hidden (hidden=False)
         if not getattr(cmd, 'hidden', False):
             func_name = cmd.callback.__name__ if cmd.callback else name
-
-            cmd_metadata = inspect_command(cmd)
-            source_file, line_number = get_command_source_file_info(cmd)
-
-            result[func_name] = {
-                'name': name,              # CLI name (e.g., 'docker-run')
-                'func_name': func_name,    # Python function name (e.g., 'docker_run')
-                'description': cmd.help.split("Examples:")[0].strip() if "Examples:" in (cmd.help or "") else (cmd.help or ""), # Extract description without examples
-                'examples': cmd.help.split("Examples:")[-1].strip() if "Examples:" in (cmd.help or "") else "",  # Extract examples if present                
-                # 'description': cmd.help or "",  # Command description from Click
-                'usage': click.Context(cmd, info_name=name).get_usage(),  # Create context to get usage string,  # Usage string from Click context
-                'source_file': source_file,
-                'line_number': line_number,
-                "is_click_group": isinstance(cmd, click.Group),  # True if this command is a group
-                "options": cmd_metadata["options"],  # List of option metadata
-                "arguments": cmd_metadata["arguments"],  # List of argument metadata
-            }
+            result[func_name] = build_command_info(name, cmd)
     return result
 
 def get_public_commands():
