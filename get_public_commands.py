@@ -122,6 +122,7 @@ def get_public_commands_with_source():
                 'description': cmd.help.split("Examples:")[0].strip() if "Examples:" in (cmd.help or "") else (cmd.help or ""), # Extract description without examples
                 'examples': cmd.help.split("Examples:")[-1].strip() if "Examples:" in (cmd.help or "") else "",  # Extract examples if present                
                 # 'description': cmd.help or "",  # Command description from Click
+                'usage': click.Context(cmd, info_name=name).get_usage(),  # Create context to get usage string,  # Usage string from Click context
                 'source_file': source_file,
                 'line_number': line_number,
                 "is_click_group": isinstance(cmd, click.Group),  # True if this command is a group

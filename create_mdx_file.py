@@ -64,6 +64,7 @@ def format_code_block(content: str) -> str:
 
     return re.sub(r'^\s*\$ (.+)$', replace_match, content, flags=re.MULTILINE)
 
+### Main logic to read source info and generate MDX file for "login" command
 with open('source_info_debug.json', 'r', encoding='utf-8') as file:
     json_file = json.load(file)
 
@@ -88,6 +89,7 @@ with open(f"output_debugz/wandb-{cmd_name}.mdx", "w", encoding="utf-8") as f:
         arguments=all_arguments,
         examples=format_code_block(json_file.get("login", {}).get("examples", "")),
         import_statements = github_import_statement(),
-        github_path=format_github_button(json_file["login"].get("source_file", ""), json_file["login"].get("line_number", ""))        
+        github_path=format_github_button(json_file["login"].get("source_file", ""), json_file["login"].get("line_number", "")),
+        usage=json_file.get("login", {}).get("usage", "")
         )
     )

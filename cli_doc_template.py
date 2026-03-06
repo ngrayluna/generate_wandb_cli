@@ -7,6 +7,9 @@ title: wandb {name}
 
 ## Usage
 
+```bash
+{usage}
+```
 
 ## Description
 
