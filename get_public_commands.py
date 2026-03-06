@@ -99,28 +99,6 @@ def get_command_source_file_info(cmd) -> Tuple[Optional[str], Optional[int]]:
     except Exception:
         return None, None
 
-# def iter_commands(
-#     cmd: click.Command,
-#     ctx: click.Context | None = None,
-# ) -> Iterator[tuple[str, click.Command]]:
-#     """
-#     Recursively yield (command_path, command_object).
-
-#     Use to find Groups and their subcommands.
-#     """
-#     if ctx is None:
-#         ctx = click.Context(cmd)
-
-#     yield ctx.command_path, cmd
-
-#     if isinstance(cmd, click.Group):
-#         for name in cmd.list_commands(ctx):
-#             sub = cmd.get_command(ctx, name)
-#             if sub is None:
-#                 continue
-#             sub_ctx = click.Context(sub, info_name=name, parent=ctx)
-#             yield from iter_commands(sub, sub_ctx)
-
 
 def build_command_info(name: str, cmd: click.Command) -> Dict:
     """Build metadata dict for a single Click command, recursing into groups."""
@@ -141,6 +119,7 @@ def build_command_info(name: str, cmd: click.Command) -> Dict:
         "arguments": cmd_metadata["arguments"],
     }
 
+    # If this command is a Group, recursively build info for subcommands
     if isinstance(cmd, click.Group):
         ctx = click.Context(cmd, info_name=name)
         subcommands = {}
