@@ -40,4 +40,11 @@ all_options = "\n".join([
 
 
 with open(f"output_debugz/wandb-{cmd_name}.mdx", "w", encoding="utf-8") as f:
-    f.write(mdx_template.format(name="login", description=json_file.get("login", {}).get("description", ""), options=all_options, arguments=all_arguments, examples=json_file.get("login", {}).get("examples", "")))
+    f.write(mdx_template.format(
+        name="login",
+        description=json_file.get("login", {}).get("description", ""),
+        options=all_options,
+        arguments=all_arguments,
+        examples=format_code_block(json_file.get("login", {}).get("examples", ""))
+        )
+    )
