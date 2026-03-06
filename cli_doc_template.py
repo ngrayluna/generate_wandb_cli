@@ -1,8 +1,9 @@
 mdx_template = """---
-title: {name}
+title: wandb {name}
 ---
 
-
+{import_statements}
+{github_path}
 
 ## Usage
 
