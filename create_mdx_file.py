@@ -81,34 +81,40 @@ def normalize_type(raw_type: str, classification: str) -> str:
     return _TYPE_DISPLAY_NAMES.get(raw_type, raw_type)
 
 
+# test_command = "login"
+# cmd_name = json_file.get(test_command, {}).get("name", [])
+
 ### Main logic to read source info and generate MDX file for "login" command
 with open('source_info_debug.json', 'r', encoding='utf-8') as file:
     json_file = json.load(file)
 
+for command_name, command_info in json_file.items():
+    arguments = command_info.get("arguments","")
+    options = command_info.get("options", "")
+    line_number = command_info.get("line_number","")
+    source_file = command_info.get("source_file","")
+    examples = command_info.get("examples", "")
+    description = command_info.get("description", "")
 
-test_command = "login"
-cmd_name = json_file.get(test_command, {}).get("name", [])
+    all_arguments = "\n".join([
+        f"| `{arg['name']}` | {normalize_type(arg['type'], arg.get('classification', ''))} | {arg['default']} | {arg['required']} |" for arg in arguments
+    ])
+
+    # Only include options that are not hidden
+    all_options = "\n".join([
+        f"| `{', '.join(opt['opts'])}` | {normalize_type(opt['type'], opt.get('classification', ''))} | {opt['description']} **Default**: {opt['default']} |" for opt in options if not opt['hidden']
+    ])
 
 
-all_arguments = "\n".join([
-    f"| {arg['name']} | {normalize_type(arg['type'], arg.get('classification', ''))} | {arg['default']} | {arg['required']} |" for arg in json_file.get(test_command, {}).get("arguments", [])
-])
-
-# Only include options that are not hidden
-all_options = "\n".join([
-    f"| {', '.join(opt['opts'])} | {normalize_type(opt['type'], opt.get('classification', ''))} | {opt['description']} **Default**: {opt['default']} |" for opt in json_file.get(test_command, {}).get("options", []) if not opt['hidden']
-])
-
-
-with open(f"output_debugz/wandb-{cmd_name}.mdx", "w", encoding="utf-8") as f:
-    f.write(mdx_template.format(
-        name=test_command,
-        description=json_file.get(test_command, {}).get("description", ""),
-        options=all_options,
-        arguments=all_arguments,
-        examples=format_code_block(json_file.get(test_command, {}).get("examples", "")),
-        import_statements = github_import_statement(),
-        github_path=format_github_button(json_file[test_command].get("source_file", ""), json_file[test_command].get("line_number", "")),
-        usage=json_file.get(test_command, {}).get("usage", "")
+    with open(f"output_debugz/wandb-{command_name}.mdx", "w", encoding="utf-8") as f:
+        f.write(mdx_template.format(
+            name=command_name,
+            description=description,
+            options=all_options,
+            arguments=all_arguments,
+            examples=format_code_block(examples),
+            import_statements = github_import_statement(),
+            github_path=format_github_button(source_file, line_number),
+            usage=json_file.get(command_name, {}).get("usage", "")
+            )
         )
-    )
