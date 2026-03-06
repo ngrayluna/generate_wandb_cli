@@ -43,28 +43,6 @@ def classify_option(param: click.Option) -> str:
 
     return "other"
 
-def iter_commands(
-    cmd: click.Command,
-    ctx: click.Context | None = None,
-) -> Iterator[tuple[str, click.Command]]:
-    """
-    Recursively yield (command_path, command_object).
-
-    Use to find Groups and their subcommands.
-    """
-    if ctx is None:
-        ctx = click.Context(cmd)
-
-    yield ctx.command_path, cmd
-
-    if isinstance(cmd, click.Group):
-        for name in cmd.list_commands(ctx):
-            sub = cmd.get_command(ctx, name)
-            if sub is None:
-                continue
-            sub_ctx = click.Context(sub, info_name=name, parent=ctx)
-            yield from iter_commands(sub, sub_ctx)
-
 
 def inspect_command(command: click.Command) -> Dict[str, List[Dict]]:
     """
@@ -100,7 +78,7 @@ def inspect_command(command: click.Command) -> Dict[str, List[Dict]]:
 
     return {"options": options, "arguments": arguments}
 
-def get_command_source_info(cmd) -> Tuple[Optional[str], Optional[int]]:
+def get_command_source_file_info(cmd) -> Tuple[Optional[str], Optional[int]]:
     """Get the source file and line number for a Click command.
 
     Args:
@@ -121,6 +99,28 @@ def get_command_source_info(cmd) -> Tuple[Optional[str], Optional[int]]:
     except Exception:
         return None, None
 
+def iter_commands(
+    cmd: click.Command,
+    ctx: click.Context | None = None,
+) -> Iterator[tuple[str, click.Command]]:
+    """
+    Recursively yield (command_path, command_object).
+
+    Use to find Groups and their subcommands.
+    """
+    if ctx is None:
+        ctx = click.Context(cmd)
+
+    yield ctx.command_path, cmd
+
+    if isinstance(cmd, click.Group):
+        for name in cmd.list_commands(ctx):
+            sub = cmd.get_command(ctx, name)
+            if sub is None:
+                continue
+            sub_ctx = click.Context(sub, info_name=name, parent=ctx)
+            yield from iter_commands(sub, sub_ctx)
+
 
 def get_public_commands_with_source():
     """Return public commands with their source file and line number.
@@ -137,7 +137,7 @@ def get_public_commands_with_source():
             func_name = cmd.callback.__name__ if cmd.callback else name
 
             cmd_metadata = inspect_command(cmd)
-            source_file, line_number = get_command_source_info(cmd)
+            source_file, line_number = get_command_source_file_info(cmd)
 
             result[func_name] = {
                 'name': name,              # CLI name (e.g., 'docker-run')
