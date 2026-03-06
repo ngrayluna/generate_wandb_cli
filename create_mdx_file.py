@@ -69,7 +69,7 @@ with open('source_info_debug.json', 'r', encoding='utf-8') as file:
     json_file = json.load(file)
 
 
-test_command = "init"
+test_command = "login"
 
 
 cmd_name = json_file.get(test_command, {}).get("name", [])
@@ -80,7 +80,7 @@ all_arguments = "\n".join([
 ])
 
 all_options = "\n".join([
-    f"| {opt['name']} | {opt['type']} | {opt['description']} **Default**: {opt['default']} |" for opt in json_file.get(test_command, {}).get("options", [])
+    f"| {', '.join(opt['opts'])} | {opt['type']} | {opt['description']} **Default**: {opt['default']} |" for opt in json_file.get(test_command, {}).get("options", [])
 ])
 
 
