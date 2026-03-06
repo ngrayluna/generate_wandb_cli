@@ -404,26 +404,26 @@ def load_source_info(filepath: str) -> dict:
 #     """Remove the ## CLI Help section (heading and its fenced code block)."""
 #     return re.sub(r'## CLI Help\n.*?(?=\n## |\Z)', '', content, flags=re.DOTALL)
 
-_TYPE_DISPLAY_NAMES = {
-    "StringParamType": "STR",
-    "IntParamType": "INT",
-    "IntRange": "INT",
-    "FloatParamType": "FLOAT",
-    "FloatRange": "FLOAT",
-    "BoolParamType": "BOOL",
-    "Path": "PATH",
-}
+# _TYPE_DISPLAY_NAMES = {
+#     "StringParamType": "STR",
+#     "IntParamType": "INT",
+#     "IntRange": "INT",
+#     "FloatParamType": "FLOAT",
+#     "FloatRange": "FLOAT",
+#     "BoolParamType": "BOOL",
+#     "Path": "PATH",
+# }
 
 
-def normalize_click_type(raw_type: str, classification: str) -> str:
-    """Map Click type class names to clean display names.
+# def normalize_click_type(raw_type: str, classification: str) -> str:
+#     """Map Click type class names to clean display names.
 
-    Returns one of: STR, INT, FLOAT, BOOL, BOOL Flag, or the raw type name
-    as a fallback for uncommon types (e.g. Choice, Path, File).
-    """
-    if classification in ("boolean-flag", "boolean-dual-flag"):
-        return "BOOL Flag"
-    return _TYPE_DISPLAY_NAMES.get(raw_type, raw_type)
+#     Returns one of: STR, INT, FLOAT, BOOL, BOOL Flag, or the raw type name
+#     as a fallback for uncommon types (e.g. Choice, Path, File).
+#     """
+#     if classification in ("boolean-flag", "boolean-dual-flag"):
+#         return "BOOL Flag"
+#     return _TYPE_DISPLAY_NAMES.get(raw_type, raw_type)
 
 
 def remove_empty_arguments_section(content: str) -> str:

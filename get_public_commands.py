@@ -19,7 +19,7 @@ import click
 import inspect
 import json
 from wandb.cli.cli import cli
-from typing import Dict, Tuple, Optional, List
+from typing import Dict, Tuple, Optional, List, Iterator
 
 def classify_option(param: click.Option) -> str:
     """
@@ -42,6 +42,29 @@ def classify_option(param: click.Option) -> str:
         return "boolean-value"
 
     return "other"
+
+def iter_commands(
+    cmd: click.Command,
+    ctx: click.Context | None = None,
+) -> Iterator[tuple[str, click.Command]]:
+    """
+    Recursively yield (command_path, command_object).
+
+    Use to find Groups and their subcommands.
+    """
+    if ctx is None:
+        ctx = click.Context(cmd)
+
+    yield ctx.command_path, cmd
+
+    if isinstance(cmd, click.Group):
+        for name in cmd.list_commands(ctx):
+            sub = cmd.get_command(ctx, name)
+            if sub is None:
+                continue
+            sub_ctx = click.Context(sub, info_name=name, parent=ctx)
+            yield from iter_commands(sub, sub_ctx)
+
 
 def inspect_command(command: click.Command) -> Dict[str, List[Dict]]:
     """
