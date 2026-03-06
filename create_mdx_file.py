@@ -69,7 +69,7 @@ with open('source_info_debug.json', 'r', encoding='utf-8') as file:
     json_file = json.load(file)
 
 
-test_command = "login"
+test_command = "init"
 
 
 cmd_name = json_file.get(test_command, {}).get("name", [])
