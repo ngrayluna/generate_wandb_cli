@@ -57,10 +57,10 @@ if __name__ == "__main__":
     # If the file names contains the name of a click group, move the file to
     # the directory for that group
     for filename in os.listdir(args.output_markdown):
-        if not filename.endswith(".md"):
+        if not filename.endswith(".mdx"):
             continue
         for group in click_group:
-            if group['name'] in filename and filename != f"{group['name']}.md":
+            if group['name'] in filename and filename != f"{group['name']}.mdx":
                 old_path = os.path.join(args.output_markdown, filename)
 
                 new_path = os.path.join(args.output_markdown, "wandb-" + group['name'], filename)

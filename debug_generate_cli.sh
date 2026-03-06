@@ -57,19 +57,8 @@ mkdir -p "$OUTPUT_DIR"
 python get_public_commands.py --output-json "$OUTPUT_JSON"
 
 # Extract command names from JSON and create .mdx files
-#python create_mdx_file.py
-
-
-# # Format the generated markdown files
-# echo "Formatting markdown files..."
-# if [ -n "$RELEASE_TAG" ]; then
-#     python format_markdown.py --markdown_directory "$OUTPUT_DIR" --source-info "$OUTPUT_JSON" --release-tag "$RELEASE_TAG"
-# else
-#     python format_markdown.py --markdown_directory "$OUTPUT_DIR" --source-info "$OUTPUT_JSON"
-# fi
+python create_mdx_file.py
 
 # python sort_markdown.py --output-markdown "$OUTPUT_DIR" --source-info "$OUTPUT_JSON"
-
-# python rename_files.py --markdown_directory "$OUTPUT_DIR" --convert_to_mdx
 
 # echo "Documentation generated${RELEASE_TAG:+ for wandb $RELEASE_TAG} in $OUTPUT_DIR/"
