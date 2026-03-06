@@ -57,7 +57,7 @@ mkdir -p "$OUTPUT_DIR"
 python get_public_commands.py --output-json "$OUTPUT_JSON"
 
 # Extract command names from JSON and create .mdx files
-python create_mdx_file.py
+#python create_mdx_file.py
 
 
 # # Format the generated markdown files

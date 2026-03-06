@@ -99,27 +99,27 @@ def get_command_source_file_info(cmd) -> Tuple[Optional[str], Optional[int]]:
     except Exception:
         return None, None
 
-def iter_commands(
-    cmd: click.Command,
-    ctx: click.Context | None = None,
-) -> Iterator[tuple[str, click.Command]]:
-    """
-    Recursively yield (command_path, command_object).
+# def iter_commands(
+#     cmd: click.Command,
+#     ctx: click.Context | None = None,
+# ) -> Iterator[tuple[str, click.Command]]:
+#     """
+#     Recursively yield (command_path, command_object).
 
-    Use to find Groups and their subcommands.
-    """
-    if ctx is None:
-        ctx = click.Context(cmd)
+#     Use to find Groups and their subcommands.
+#     """
+#     if ctx is None:
+#         ctx = click.Context(cmd)
 
-    yield ctx.command_path, cmd
+#     yield ctx.command_path, cmd
 
-    if isinstance(cmd, click.Group):
-        for name in cmd.list_commands(ctx):
-            sub = cmd.get_command(ctx, name)
-            if sub is None:
-                continue
-            sub_ctx = click.Context(sub, info_name=name, parent=ctx)
-            yield from iter_commands(sub, sub_ctx)
+#     if isinstance(cmd, click.Group):
+#         for name in cmd.list_commands(ctx):
+#             sub = cmd.get_command(ctx, name)
+#             if sub is None:
+#                 continue
+#             sub_ctx = click.Context(sub, info_name=name, parent=ctx)
+#             yield from iter_commands(sub, sub_ctx)
 
 
 def build_command_info(name: str, cmd: click.Command) -> Dict:
