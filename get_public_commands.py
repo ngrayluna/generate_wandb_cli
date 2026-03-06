@@ -119,7 +119,9 @@ def get_public_commands_with_source():
             result[func_name] = {
                 'name': name,              # CLI name (e.g., 'docker-run')
                 'func_name': func_name,    # Python function name (e.g., 'docker_run')
-                'description': cmd.help or "",  # Command description from Click
+                'description': cmd.help.split("Examples:")[0].strip() if "Examples:" in (cmd.help or "") else (cmd.help or ""), # Extract description without examples
+                'examples': cmd.help.split("Examples:")[-1].strip() if "Examples:" in (cmd.help or "") else "",  # Extract examples if present                
+                # 'description': cmd.help or "",  # Command description from Click
                 'source_file': source_file,
                 'line_number': line_number,
                 "is_click_group": isinstance(cmd, click.Group),  # True if this command is a group

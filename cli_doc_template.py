@@ -1,5 +1,4 @@
-mdx_template = """
----
+mdx_template = """---
 title: {name}
 ---
 
@@ -13,8 +12,11 @@ title: {name}
 
 ## Examples
 
+{examples}
+
 
 ## Arguments
+
 | Name | Default | Type |
 |------|---------|------|
 {arguments}
