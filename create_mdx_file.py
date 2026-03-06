@@ -64,24 +64,39 @@ def format_code_block(content: str) -> str:
 
     return re.sub(r'^\s*\$ (.+)$', replace_match, content, flags=re.MULTILINE)
 
+_TYPE_DISPLAY_NAMES = {
+    "StringParamType": "STR",
+    "IntParamType": "INT",
+    "IntRange": "INT",
+    "FloatParamType": "FLOAT",
+    "FloatRange": "FLOAT",
+    "BoolParamType": "BOOL",
+    "Path": "PATH",
+}
+
+def normalize_type(raw_type: str, classification: str) -> str:
+    """Map Click type class names to clean display names."""
+    if classification in ("boolean-flag", "boolean-dual-flag"):
+        return "BOOL Flag"
+    return _TYPE_DISPLAY_NAMES.get(raw_type, raw_type)
+
+
 ### Main logic to read source info and generate MDX file for "login" command
 with open('source_info_debug.json', 'r', encoding='utf-8') as file:
     json_file = json.load(file)
 
 
 test_command = "login"
-
-
 cmd_name = json_file.get(test_command, {}).get("name", [])
 
 
 all_arguments = "\n".join([
-    f"| {arg['name']} | {arg['type']} | {arg['default']} | {arg['required']} |" for arg in json_file.get(test_command, {}).get("arguments", [])
+    f"| {arg['name']} | {normalize_type(arg['type'], arg.get('classification', ''))} | {arg['default']} | {arg['required']} |" for arg in json_file.get(test_command, {}).get("arguments", [])
 ])
 
 # Only include options that are not hidden
 all_options = "\n".join([
-    f"| {', '.join(opt['opts'])} | {opt['type']} | {opt['description']} **Default**: {opt['default']} |" for opt in json_file.get(test_command, {}).get("options", []) if not opt['hidden']
+    f"| {', '.join(opt['opts'])} | {normalize_type(opt['type'], opt.get('classification', ''))} | {opt['description']} **Default**: {opt['default']} |" for opt in json_file.get(test_command, {}).get("options", []) if not opt['hidden']
 ])
 
 
