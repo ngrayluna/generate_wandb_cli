@@ -104,7 +104,7 @@ def generate_mdx(command_info, command_path: list[str]):
     ])
 
     all_options = "\n".join([
-        f"| `{', '.join(opt['opts'])}` | {normalize_type(opt['type'], opt.get('classification', ''))} | {opt['description']} **Default**: {opt['default']} |" for opt in options if not opt['hidden']
+        f"| `{', '.join(opt['opts'])}` | {normalize_type(opt['type'], opt.get('classification', ''))} | {' '.join(opt['description'].splitlines())} **Default**: {opt['default']} |" for opt in options if not opt['hidden']
     ])
 
     # Build subcommands listing for group pages

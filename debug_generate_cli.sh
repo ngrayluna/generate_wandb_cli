@@ -59,6 +59,6 @@ python get_public_commands.py --output-json "$OUTPUT_JSON"
 # Extract command names from JSON and create .mdx files
 python create_mdx_file.py
 
-# python sort_markdown.py --output-markdown "$OUTPUT_DIR" --source-info "$OUTPUT_JSON"
+python sort_markdown.py --output-markdown "$OUTPUT_DIR" --source-info "$OUTPUT_JSON"
 
 # echo "Documentation generated${RELEASE_TAG:+ for wandb $RELEASE_TAG} in $OUTPUT_DIR/"

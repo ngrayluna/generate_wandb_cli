@@ -532,7 +532,7 @@ def main(args):
         # Write back to file with frontmatter
         print(f"Writing formatted content to {filename}")
         with open(filename, 'w', encoding='utf-8') as f:
-            f.write(add_frontmatter(filename))
+            #f.write(add_frontmatter(filename))
             f.write(formatted)
 
 

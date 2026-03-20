@@ -111,7 +111,7 @@ def build_command_info(name: str, cmd: click.Command) -> Dict:
         'func_name': func_name,
         'description': cmd.help.split("Examples:")[0].strip() if "Examples:" in (cmd.help or "") else (cmd.help or ""),
         'examples': cmd.help.split("Examples:")[-1].strip() if "Examples:" in (cmd.help or "") else "",
-        'usage': click.Context(cmd, info_name=name).get_usage(),
+        'usage': click.Context(cmd, info_name=name).get_usage().split("Usage:")[-1].strip() if cmd else "",
         'source_file': source_file,
         'line_number': line_number,
         "is_click_group": isinstance(cmd, click.Group),
