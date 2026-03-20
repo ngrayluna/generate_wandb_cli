@@ -117,7 +117,7 @@ def generate_mdx(command_info, command_path: list[str]):
             sub_slug = "-".join(command_path + [sub_name])
             sub_display = " ".join(command_path + [sub_name])
             sub_desc = sub_info.get("description", "").split("\n")[0]
-            links.append(f"| [`wandb {sub_display}`](wandb-{sub_slug}) | {sub_desc} |")
+            links.append(f"| [`wandb {sub_display}`](wandb-{display_name.replace(' ', '-')}/wandb-{sub_slug}) | {sub_desc} |")
         subcommands_section = ("\n".join(links) + "\n") if links else ""
 
 
