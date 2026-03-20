@@ -2,8 +2,7 @@ import re
 import json
 from typing import Optional
 
-from cli_doc_template import mdx_template
-from cli_group_template import mdx_group_template
+from cli_doc_template import mdx_template, mdx_group_template
 
 def _github_button(href_links):
     """Add a GitHub button with the given URL.
