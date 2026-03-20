@@ -15,9 +15,5 @@ title: wandb {name}
 
 {description}
 
-## Subcommands
-
-| Command | Description |
-|---------|-------------|
-{subcommands}
+{subcommands_section}
 """

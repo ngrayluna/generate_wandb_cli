@@ -101,16 +101,42 @@ def generate_mdx(command_info, command_path: list[str]):
     display_name = " ".join(command_path)
     file_slug = "-".join(command_path)
 
+
+    examples_section = ""
+    if examples and examples.strip():
+        examples_section = f"""## Examples
+
+{format_code_block(examples)}
+"""
+
+
     all_arguments = "\n".join([
         f"| `{arg['name']}` | {normalize_type(arg['type'], arg.get('classification', ''))} | {arg['default']} | {arg['required']} |" for arg in arguments
     ])
+
+    arguments_section = ""
+    if all_arguments and all_arguments.strip():
+        arguments_section = f"""## Arguments
+
+| Name | Default | Type |
+|------|---------|------|
+{all_arguments}
+"""
 
     all_options = "\n".join([
         f"| `{', '.join(opt['opts'])}` | {normalize_type(opt['type'], opt.get('classification', ''))} | {' '.join(opt['description'].splitlines())} **Default**: {opt['default']} |" for opt in options if not opt['hidden']
     ])
 
+    options_section = ""
+    if all_options and all_options.strip():
+        options_section = f"""## Options
+
+| Flag | Type | Description |
+|------|------|-------------|
+{all_options}
+"""
+
     # Build subcommands listing for group pages
-    subcommands_section = ""
     if subcommands:
         links = []
         for sub_name, sub_info in subcommands.items():
@@ -118,16 +144,23 @@ def generate_mdx(command_info, command_path: list[str]):
             sub_display = " ".join(command_path + [sub_name])
             sub_desc = sub_info.get("description", "").split("\n")[0]
             links.append(f"| [`wandb {sub_display}`](wandb-{display_name.replace(' ', '-')}/wandb-{sub_slug}) | {sub_desc} |")
-        subcommands_section = ("\n".join(links) + "\n") if links else ""
+        all_subcommands = ("\n".join(links) + "\n") if links else ""
 
+    subcommands_section = ""
+    if is_group and subcommands:
+        subcommands_section = f"""## Subcommands
+
+| Command | Description |
+|---------|-------------|
+{all_subcommands}
+"""
 
     with open(f"output_debugz/wandb-{file_slug}.mdx", "w", encoding="utf-8") as f:
-
         if is_group:
             f.write(mdx_group_template.format(
                 name=display_name,
                 description=description,
-                subcommands=subcommands_section,
+                subcommands_section=subcommands_section,
                 import_statements=github_import_statement(),
                 github_path=format_github_button(source_file, line_number),
                 usage=command_info.get("usage", ""),
@@ -137,9 +170,9 @@ def generate_mdx(command_info, command_path: list[str]):
             f.write(mdx_template.format(
                 name=display_name,
                 description=description,
-                options=all_options,
-                arguments=all_arguments,
-                examples=format_code_block(examples),
+                options_section=options_section,
+                arguments_section=arguments_section,
+                examples_section=examples_section,
                 import_statements=github_import_statement(),
                 github_path=format_github_button(source_file, line_number),
                 usage=command_info.get("usage", ""),

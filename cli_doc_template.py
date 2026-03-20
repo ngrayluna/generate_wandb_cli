@@ -15,20 +15,9 @@ title: wandb {name}
 
 {description}
 
-## Examples
+{examples_section}
 
-{examples}
+{arguments_section}
 
-
-## Arguments
-
-| Name | Default | Type |
-|------|---------|------|
-{arguments}
-
-## Options
-
-| Flag | Type | Description |
-|------|------|-------------|
-{options}
+{options_section}
 """
