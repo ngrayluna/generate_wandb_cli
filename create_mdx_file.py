@@ -3,6 +3,7 @@ import json
 from typing import Optional
 
 from cli_doc_template import mdx_template
+from cli_group_template import mdx_group_template
 
 def _github_button(href_links):
     """Add a GitHub button with the given URL.
@@ -95,6 +96,7 @@ def generate_mdx(command_info, command_path: list[str]):
     examples = command_info.get("examples", "")
     description = command_info.get("description", "")
     subcommands = command_info.get("subcommands", {})
+    is_group = command_info.get("is_click_group", False)
 
     display_name = " ".join(command_path)
     file_slug = "-".join(command_path)
@@ -116,25 +118,34 @@ def generate_mdx(command_info, command_path: list[str]):
             sub_display = " ".join(command_path + [sub_name])
             sub_desc = sub_info.get("description", "").split("\n")[0]
             links.append(f"| [`wandb {sub_display}`](wandb-{sub_slug}) | {sub_desc} |")
-        subcommands_section = (
-            "\n## Subcommands\n\n"
-            "| Command | Description |\n"
-            "|---------|-------------|\n"
-            + "\n".join(links)
-            + "\n"
-        )
+        subcommands_section = ("\n".join(links) + "\n") if links else ""
+
 
     with open(f"output_debugz/wandb-{file_slug}.mdx", "w", encoding="utf-8") as f:
-        f.write(mdx_template.format(
-            name=display_name,
-            description=description + subcommands_section,
-            options=all_options,
-            arguments=all_arguments,
-            examples=format_code_block(examples),
-            import_statements=github_import_statement(),
-            github_path=format_github_button(source_file, line_number),
-            usage=command_info.get("usage", ""),
-        ))
+
+        if is_group:
+            f.write(mdx_group_template.format(
+                name=display_name,
+                description=description,
+                subcommands=subcommands_section,
+                import_statements=github_import_statement(),
+                github_path=format_github_button(source_file, line_number),
+                usage=command_info.get("usage", ""),
+            ))
+
+        else:
+            f.write(mdx_template.format(
+                name=display_name,
+                description=description,
+                options=all_options,
+                arguments=all_arguments,
+                examples=format_code_block(examples),
+                import_statements=github_import_statement(),
+                github_path=format_github_button(source_file, line_number),
+                usage=command_info.get("usage", ""),
+            ))
+
+
 
     # Recurse into subcommands
     for sub_name, sub_info in subcommands.items():
