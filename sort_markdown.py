@@ -39,29 +39,41 @@ if __name__ == "__main__":
 
     # Load existing source info (already generated and enriched by earlier pipeline steps)
     with open(args.source_info, "r") as f:
-        public_commands = list(json.load(f).values())
+        public_commands = json.load(f)
 
-    # Get list of click groups from the commands
-    click_group = []
-    for cmd in public_commands:
-        if cmd['is_click_group']:
-            click_group.append({'name': cmd['name'], 'func_name': cmd['func_name']})
-    
-    # Make a directory for each click group
-    for group in click_group:
-        group_dir = os.path.join(args.output_markdown, "wandb-" + group['name'])
-        if not os.path.exists(group_dir):
-            os.makedirs(group_dir)
+    root_dir = args.output_markdown
 
-    # Read in markdown files in the output markdown directory
-    # If the file names contains the name of a click group, move the file to
-    # the directory for that group
-    for filename in os.listdir(args.output_markdown):
-        if not filename.endswith(".md"):
-            continue
-        for group in click_group:
-            if group['name'] in filename and filename != f"{group['name']}.md":
-                old_path = os.path.join(args.output_markdown, filename)
+    def sort_group(command_info, parent_dir, command_path):
+        """Recursively create directories for groups and move subcommand files.
 
-                new_path = os.path.join(args.output_markdown, "wandb-" + group['name'], filename)
+        Args:
+            command_info: Dict with command metadata (including 'subcommands' for groups).
+            parent_dir: Directory where this group's folder should be created.
+            command_path: List of command name segments, e.g. ["artifact", "cache"].
+        """
+        subcommands = command_info.get("subcommands", {})
+        if not subcommands:
+            return
+
+        group_slug = "-".join(command_path)
+        group_dir = os.path.join(parent_dir, f"wandb-{group_slug}")
+        os.makedirs(group_dir, exist_ok=True)
+
+        for sub_name, sub_info in subcommands.items():
+            sub_path = command_path + [sub_name]
+            sub_slug = "-".join(sub_path)
+            filename = f"wandb-{sub_slug}.mdx"
+            # Files are always generated flat in the root output directory
+            old_path = os.path.join(root_dir, filename)
+
+            if os.path.exists(old_path):
+                new_path = os.path.join(group_dir, filename)
                 os.rename(old_path, new_path)
+                print(f"  Moved {filename} -> wandb-{group_slug}/")
+
+            # Recurse into nested groups
+            sort_group(sub_info, group_dir, sub_path)
+
+    for cmd_info in public_commands.values():
+        if cmd_info.get("is_click_group"):
+            sort_group(cmd_info, root_dir, [cmd_info["name"]])
