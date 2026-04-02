@@ -5,7 +5,7 @@ Usage: python create_mdx_file.py --json-file source_info_debug.json
 import argparse
 import re
 import json
-from os import name
+import textwrap
 from typing import Optional
 
 from cli_doc_template import mdx_template, mdx_group_template
@@ -69,6 +69,20 @@ def format_code_block(content: str) -> str:
         return f"\n```bash\n{command}\n```"
 
     return re.sub(r'^\s*\$ (.+)$', replace_match, content, flags=re.MULTILINE)
+
+
+def format_description(content: str) -> str:
+    """Clean up a CLI command description for MDX output.
+
+    Applies the following transformations:
+    - Strips leading/trailing whitespace
+    - Removes common leading indentation (from docstring formatting)
+    - Converts indented '$ command' lines into fenced bash code blocks
+    """
+    content = textwrap.dedent(content).strip()
+    content = format_code_block(content)
+    return content
+
 
 _TYPE_DISPLAY_NAMES = {
     "StringParamType": "STR",
@@ -176,7 +190,7 @@ def generate_mdx(command_info, command_path: list[str], output_dir: str):
         command_info: Dict of command metadata from source_info_debug.json.
         command_path: List of command name segments, e.g. ["server", "start"].
     """
-    description = command_info.get("description", "")
+    description = format_description(command_info.get("description", ""))
     source_file = command_info.get("source_file", "")
     line_number = command_info.get("line_number", "")
     subcommands = command_info.get("subcommands", {})
