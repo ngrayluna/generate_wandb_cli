@@ -62,7 +62,12 @@ fi
 python get_public_commands.py --output-json "$OUTPUT_JSON"
 
 # Extract command names from JSON and create .mdx files
-python create_mdx_file.py --source-info "$OUTPUT_JSON" --output-dir "$OUTPUT_DIR"
+if [ -n "$RELEASE_TAG" ]; then
+    python create_mdx_file.py --source-info "$OUTPUT_JSON" --output-dir "$OUTPUT_DIR" --release-tag "$RELEASE_TAG"
+else
+    python create_mdx_file.py --source-info "$OUTPUT_JSON" --output-dir "$OUTPUT_DIR"
+fi
+
 
 python sort_markdown.py --output-markdown "$OUTPUT_DIR" --source-info "$OUTPUT_JSON"
 

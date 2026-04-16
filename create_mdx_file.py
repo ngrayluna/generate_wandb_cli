@@ -183,12 +183,14 @@ def build_subcommands_section(command_path: list[str], subcommands: dict) -> str
     return f"## Subcommands\n\n| Command | Description |\n|---------|-------------|\n{chr(10).join(rows)}\n"
 
 
-def generate_mdx(command_info, command_path: list[str], output_dir: str):
+def generate_mdx(command_info, command_path: list[str], output_dir: str, release_tag: Optional[str] = None):
     """Generate an MDX file for a command and recurse into subcommands.
 
     Args:
         command_info: Dict of command metadata from source_info_debug.json.
         command_path: List of command name segments, e.g. ["server", "start"].
+        output_dir: Directory to write generated MDX files.
+        release_tag: Git tag for GitHub URL (e.g., 'v0.18.3'). Defaults to 'main'.
     """
     description = format_description(command_info.get("description", ""))
     source_file = command_info.get("source_file", "")
@@ -203,7 +205,7 @@ def generate_mdx(command_info, command_path: list[str], output_dir: str):
         name=display_name,
         description=description,
         import_statements=github_import_statement(),
-        github_path=format_github_button(source_file, line_number),
+        github_path=format_github_button(source_file, line_number, release_tag),
         usage=command_info.get("usage", ""),
     )
 
@@ -223,7 +225,7 @@ def generate_mdx(command_info, command_path: list[str], output_dir: str):
 
     # Recurse into subcommands
     for sub_name, sub_info in subcommands.items():
-        generate_mdx(sub_info, command_path + [sub_name], output_dir)
+        generate_mdx(sub_info, command_path + [sub_name], output_dir, release_tag)
 
 
 def main(args):
@@ -233,11 +235,12 @@ def main(args):
         json_file = json.load(file)
 
     for command_name, command_info in json_file.items():
-        generate_mdx(command_info, [command_info.get("name", command_name)], args.output_dir)
+        generate_mdx(command_info, [command_info.get("name", command_name)], args.output_dir, args.release_tag)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate MDX documentation files for Click commands.")
     parser.add_argument("--source-info", default="source_info.json", help="Path to JSON file with command metadata.")
     parser.add_argument("--output-dir", default="output", help="Directory to write generated MDX files.")
+    parser.add_argument("--release-tag", default=None, help="Git tag for GitHub source URLs (e.g., 'v0.18.3'). Defaults to 'main'.")
     main(parser.parse_args())
     print("MDX generation complete.")
