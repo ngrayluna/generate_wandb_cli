@@ -149,7 +149,9 @@ def format_subcommand_row(command_path: list[str], sub_name: str, sub_info: dict
     sub_slug = "-".join(command_path + [sub_name])
     sub_display = " ".join(command_path + [sub_name])
     sub_desc = sub_info.get("description", "").split("\n")[0]
-    return f"| [`wandb {sub_display}`](wandb-{display_name.replace(' ', '-')}/wandb-{sub_slug}) | {sub_desc} |"
+    return f"| `wandb {sub_display}` | {sub_desc} |"
+    # TO DO: Consider linking to subcommand MDX file if it exists, e.g.:
+    #return f"| [`wandb {sub_display}`](wandb-{display_name.replace(' ', '-')}/wandb-{sub_slug}) | {sub_desc} |"
 
 
 def build_examples_section(examples: str) -> str:
