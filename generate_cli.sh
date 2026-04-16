@@ -23,7 +23,7 @@ REPO_URL="https://github.com/wandb/wandb.git"
 REPO_DIR="wandb"
 OUTPUT_JSON="source_info.json"
 OUTPUT_DIR="output"
-MDX_OUTPUT_DIR="cli"
+MDX_OUTPUT_DIR="${2:-output}"
 
 if [ -n "$RELEASE_TAG" ]; then
     # Clone or update the wandb repository
@@ -62,8 +62,17 @@ fi
 python get_public_commands.py --output-json "$OUTPUT_JSON"
 
 # Extract command names from JSON and create .mdx files
-python create_mdx_file.py --source-info "$OUTPUT_JSON" --output-dir "$OUTPUT_DIR"
+if [ -n "$RELEASE_TAG" ]; then
+    python create_mdx_file.py --source-info "$OUTPUT_JSON" --output-dir "$OUTPUT_DIR" --release-tag "$RELEASE_TAG"
+else
+    python create_mdx_file.py --source-info "$OUTPUT_JSON" --output-dir "$OUTPUT_DIR"
+fi
 
 python sort_markdown.py --output-markdown "$OUTPUT_DIR" --source-info "$OUTPUT_JSON"
 
-# echo "Documentation generated${RELEASE_TAG:+ for wandb $RELEASE_TAG} in $OUTPUT_DIR/"
+if [ -n "$MDX_OUTPUT_DIR" ]; then
+    # Copy .mdx files to the specified output directory.
+    mkdir -p "$MDX_OUTPUT_DIR"
+    cp -r "$OUTPUT_DIR"/* "$MDX_OUTPUT_DIR/"
+    echo "Copied .mdx files to $MDX_OUTPUT_DIR/."
+fi
