@@ -18,12 +18,19 @@ Example:
 
 If no release tag is provided, the script uses the existing `./wandb/` directory as-is (useful for local testing).
 
+Optionally specify a directory to copy the markdown files to:
+
+```bash
+bash ./generate_cli.sh v0.26.0 docs/models/ref/cli
+```
+
 ## How it works
 
 1. Clones or updates the `wandb/wandb` repo to `./wandb/` and checks out the specified release tag.
 2. Introspects the Click CLI to discover all public (non-hidden) commands, arguments, options, and subcommands. Writes structured metadata to `source_info.json`.
 3. Generates one MDX file per command using templates, with GitHub source links, usage blocks, argument/option tables, and examples.
 4. Organizes subcommand files into directories matching their Click group hierarchy.
+5. (Optionally) Recursively copy the markdown files to the specified directory.
 
 Output is written to `./output/`.
 

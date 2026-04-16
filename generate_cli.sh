@@ -11,6 +11,9 @@
 #
 # Usage: ./generate_cli.sh [release_tag]
 # Example: ./generate_cli.sh v0.18.3
+# Note: If you want to specify a different output directory for the .mdx files,
+# you can provide it as a second argument:
+# Example: ./generate_cli.sh v0.18.3 docs/models/ref/cli
 #
 # If no release_tag is provided, the script uses the existing ./wandb/
 # directory as-is (useful for local testing). GitHub source links will
